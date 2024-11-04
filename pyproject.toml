@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "fastbot"
+version = "0.0.0"
+description = ""
+authors = ["pharci <lesha.belikov2005@yandex.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.4"
+aiogram = "^3.14.0"
+aiosqlite = "^0.20.0"
+pydantic = "^2.9.2"
+uvicorn = "^0.32.0"
+pydantic-settings = "^2.6.1"
+tortoise-orm = "^0.21.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
