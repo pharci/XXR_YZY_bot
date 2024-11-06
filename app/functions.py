@@ -1,43 +1,6 @@
-from fastapi import FastAPI
-from .models import *
-from .db import init_db, close_db
-from pydantic import BaseModel
+from models import *
 import random
 
-
-class SysdataCreate(BaseModel):
-    currency: str
-    exchange_currency: str
-    exchange_rate: float
-
-app = FastAPI()
-
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    await close_db()
-
-@app.get("/users")
-async def read_users():
-    users = await User.all()
-    return users
-
-@app.post("/sysdata/")
-async def create_sysdata(sysdata: SysdataCreate):
-    new_sysdata = await Sysdata.create(
-        currency=sysdata.currency,
-        exchange_currency=sysdata.exchange_currency,
-        exchange_rate=sysdata.exchange_rate
-    )
-    return {"id": new_sysdata.id, "currency": new_sysdata.currency}
-
-@app.get("/sysdata/")
-async def read_sysdata():
-    all_sysdata = await Sysdata.all()
-    return all_sysdata
 
 async def get_currency_by_id(currency_id: int):
     try:
@@ -45,15 +8,14 @@ async def get_currency_by_id(currency_id: int):
         return {
             "id": currency_data.id,
             "currency": currency_data.currency,
+            "graduation_step": str(currency_data.graduation_step),
             "exchange_currency": currency_data.exchange_currency,
             "exchange_rate": str(currency_data.exchange_rate)  # Конвертируем Decimal в строку для JSON
         }
     except:
         return None 
 
-async def add_or_get_user(username: str, user_id: int):
-    user, created = await User.get_or_create(username=username, user_id=user_id)
-    return user
+
 
 async def get_all_currencies():
     currencies = await Sysdata.all()

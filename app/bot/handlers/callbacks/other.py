@@ -1,11 +1,9 @@
 from aiogram import Router, types
-from admin.api import *
-from bot.keyboards import *
+from app.bot.keyboards import *
 from aiogram import F, Router
-from bot.main import dp, bot
 
 router = Router()
 
-@dp.callback_query(F.data == "Other")
+@router.callback_query(F.data == "Other")
 async def start(call: types.CallbackQuery):
     await call.message.edit_text("Другое", reply_markup=autokey({'Назад': 'start'}))

@@ -1,13 +1,11 @@
 from aiogram import Router, types
-from admin.api import *
-from ..keyboards import *
+from app.bot.keyboards import *
 from aiogram import F, Router
-from ..main import dp, bot
 from datetime import datetime, timedelta
 
 router = Router()
 
-@dp.callback_query(F.data == "Profile")
+@router.callback_query(F.data == "Profile")
 async def start(call: types.CallbackQuery):
     user = await add_or_get_user(call.message.chat.username, call.message.chat.id)
 
@@ -16,7 +14,7 @@ async def start(call: types.CallbackQuery):
         reply_markup=autokey({'Последние 5 заказов': 'ShowOrders', 'Назад': 'start'})
     )
 
-@dp.callback_query(F.data == "ShowOrders")
+@router.callback_query(F.data == "ShowOrders")
 async def start(call: types.CallbackQuery):
     user = await add_or_get_user(call.message.chat.username, call.message.chat.id)
     orders = await get_last_5_orders(user)

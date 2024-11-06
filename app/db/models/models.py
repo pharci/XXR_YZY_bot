@@ -1,14 +1,5 @@
 from tortoise import fields, models
 
-class User(models.Model):
-    id = fields.IntField(primary_key=True)
-    username = fields.CharField(max_length=255, unique=True)
-    user_id = fields.IntField(unique=True)
-    date_created = fields.DatetimeField(auto_now_add=True)
-    date_updated = fields.DatetimeField(auto_now=True)
-
-    class Meta:
-        table = "users"
 
 class UserActivity(models.Model):
     user = fields.ForeignKeyField("models.User", related_name='activities', on_delete=fields.SET_NULL, null=True)
@@ -35,6 +26,7 @@ class Sysdata(models.Model):
     currency = fields.CharField(max_length=10)  # Валюта
     exchange_currency = fields.CharField(max_length=10)  # Валюта для обмена
     exchange_rate = fields.DecimalField(max_digits=10, decimal_places=4)  # Курс
+    graduation_step = fields.DecimalField(max_digits=10, decimal_places=4)
 
     class Meta:
         table = "sysdata"

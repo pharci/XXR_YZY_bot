@@ -1,13 +1,11 @@
 from aiogram import Router, types
 from aiogram.filters import Filter
-from admin.api import *
-from bot.keyboards import *
+from app.bot.keyboards import *
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from bot.main import dp, bot
 
 router = Router()
 
@@ -106,16 +104,16 @@ async def finish(message: types.Message, state: FSMContext):
 
     exchange_rates = {
         0: round(float(data['exchange_rate']), 2),
-        250: round(float(data['exchange_rate']) - 0.1, 2),
-        500: round(float(data['exchange_rate']) - 0.2, 2),
-        1000: round(float(data['exchange_rate']) - 0.3, 2),
-        5000: round(float(data['exchange_rate']) - 0.35, 2),
-        10000: round(float(data['exchange_rate']) - 0.45, 2),
+        250: round(float(data['exchange_rate']) - float(data["graduation_step"]), 2),
+        500: round(float(data['exchange_rate']) - float(data["graduation_step"]) * 2, 2),
+        1000: round(float(data['exchange_rate']) - float(data["graduation_step"]) * 3, 2),
+        5000: round(float(data['exchange_rate']) - float(data["graduation_step"]) * 3.5, 2),
+        10000: round(float(data['exchange_rate']) - float(data["graduation_step"]) * 4.5, 2),
     }
 
     user_currency = user_data["currency_input"]
     determined_rate = 0
-
+    currency_text = ""
     # Проверяем, соответствует ли введенная валюта целевой валюте
     if user_currency == data['currency']:
         previous_min_amount = 0
@@ -149,10 +147,7 @@ async def finish(message: types.Message, state: FSMContext):
 
     rates_text = "\n".join([f"От {amount} {data['exchange_currency']}  - {rate} {data['currency']}" for amount, rate in exchange_rates.items()])
 
-    await message.delete()
-    await bot.edit_message_text(
-        chat_id=message.chat.id,
-        message_id=user_data['message_id'],
+    await message.answer(
         text=f"Конвертация по курсу - {exchange_rates[determined_rate]} {data['currency']}:\n\n"
              f"{rates_text}\n\n"
              f"{currency_text}",
