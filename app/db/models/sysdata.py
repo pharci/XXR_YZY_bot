@@ -1,27 +1,5 @@
 from tortoise import fields, models
 
-
-class UserActivity(models.Model):
-    user = fields.ForeignKeyField("models.User", related_name='activities', on_delete=fields.SET_NULL, null=True)
-    activity_type = fields.CharField(max_length=255)  # Тип активности
-    timestamp = fields.DatetimeField(auto_now_add=True)  # Время активности
-
-    class Meta:
-        table = "user_activities"
-
-class Order(models.Model):
-    user = fields.ForeignKeyField("models.User", related_name='orders', on_delete=fields.CASCADE)
-    order_id = fields.IntField()  # Идентификатор заказа
-    contact_method = fields.CharField(max_length=255, null=True)  # Способ связи
-    currency = fields.CharField(max_length=10, default="Rub")  # Валюта
-    amount = fields.DecimalField(max_digits=10, decimal_places=2)  # Количество валюты
-    exchange_currency = fields.CharField(max_length=10)  # Валюта для обмена
-    exchange_rate = fields.DecimalField(max_digits=10, decimal_places=4)  # Курс обмена
-    date_created = fields.DatetimeField(auto_now_add=True)
-
-    class Meta:
-        table = "orders"
-
 class Sysdata(models.Model):
     currency = fields.CharField(max_length=10)  # Валюта
     exchange_currency = fields.CharField(max_length=10)  # Валюта для обмена

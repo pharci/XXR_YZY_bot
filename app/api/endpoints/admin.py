@@ -1,24 +1,21 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.schemas.sysdata import SysdataCreate
+from app.crud.sysdata import get_currency_by_id, get_all_currencies, create_currency
 
 router = APIRouter()
 
 @router.post("/sysdata/")
-async def create_sysdata(sysdata: SysdataCreate):
-    new_sysdata = await Sysdata.create(
-        currency=sysdata.currency,
-        exchange_currency=sysdata.exchange_currency,
-        exchange_rate=sysdata.exchange_rate,
-        graduation_step=sysdata.graduation_step
-    )
-    return {"id": new_sysdata.id, 
-            "currency": new_sysdata.currency, 
-            "exchange_currency": new_sysdata.exchange_currency, 
-            "exchange_rate": new_sysdata.exchange_rate,
-            "graduation_step": new_sysdata.graduation_step,
-            }
+async def create_currency_ep(sysdata: SysdataCreate):
+    return await create_currency(sysdata)
 
 @router.get("/sysdata/")
 async def read_sysdata():
-    all_sysdata = await Sysdata.all()
-    return all_sysdata
+    return await get_all_currencies()
+
+@router.get("/sysdata/{currency_id}/")
+async def read_currency_by_id(currency_id: int):
+    currency = await get_currency_by_id(currency_id)
+    if not currency:
+        raise HTTPException(status_code=404, detail="Currency not found")
+    return currency
+

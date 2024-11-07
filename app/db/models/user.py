@@ -9,3 +9,11 @@ class User(models.Model):
 
     class Meta:
         table = "users"
+
+class UserActivity(models.Model):
+    user = fields.ForeignKeyField("models.User", related_name='activities', on_delete=fields.SET_NULL, null=True)
+    activity_type = fields.CharField(max_length=255)  # Тип активности
+    timestamp = fields.DatetimeField(auto_now_add=True)  # Время активности
+
+    class Meta:
+        table = "user_activities"

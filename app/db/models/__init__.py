@@ -1,2 +1,3 @@
-from .user import User  # Импорт модели User из user.py
-from .models import UserActivity, Order, Sysdata, PromoCode
+from .user import User, UserActivity
+from .order import Order
+from .sysdata import Sysdata, PromoCode

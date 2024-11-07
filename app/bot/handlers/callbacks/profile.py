@@ -2,12 +2,15 @@ from aiogram import Router, types
 from app.bot.keyboards import *
 from aiogram import F, Router
 from datetime import datetime, timedelta
+from app.bot.keyboards.keyboards import autokey
+from app.crud.order import get_last_5_orders
+from app.crud.user import get_user
 
 router = Router()
 
 @router.callback_query(F.data == "Profile")
 async def start(call: types.CallbackQuery):
-    user = await add_or_get_user(call.message.chat.username, call.message.chat.id)
+    user = await get_user(call.message.chat.id)
 
     await call.message.edit_text(
         f"ID: {user.user_id}\nUsername: @{user.username}\nДата регистрации: {(user.date_created + timedelta(hours=3)).strftime("%d.%m.%Y %H:%M:%S")}", 
@@ -16,7 +19,7 @@ async def start(call: types.CallbackQuery):
 
 @router.callback_query(F.data == "ShowOrders")
 async def start(call: types.CallbackQuery):
-    user = await add_or_get_user(call.message.chat.username, call.message.chat.id)
+    user = await get_user(call.message.chat.id)
     orders = await get_last_5_orders(user)
 
     if orders:

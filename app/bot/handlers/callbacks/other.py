@@ -1,6 +1,7 @@
 from aiogram import Router, types
 from app.bot.keyboards import *
 from aiogram import F, Router
+from app.bot.keyboards.keyboards import autokey
 
 router = Router()
 
