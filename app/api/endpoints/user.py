@@ -1,35 +1,101 @@
-from fastapi import APIRouter, HTTPException
-from app.schemas.user import UserGet
-from app.schemas.order import OrderGet
-from app.crud.user import get_user, get_all_users
-from app.crud.order import get_all_orders, get_order_by_id, get_all_user_orders
-from typing import List
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.requests import Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from app.db.models import *
+from app.db.admin import admin_models
+
+templates = Jinja2Templates(directory="app/admin_panel/templates")
 
 router = APIRouter()
 
-@router.get("/users/", response_model=List[UserGet])
-async def read_all_users():
-    return await get_all_users()
+@router.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    return templates.TemplateResponse("main.html", {"request": request})
 
-@router.get("/users/{user_id}", response_model=UserGet)
-async def read_user(user_id: int):
-    return await get_user(user_id=user_id)
+def get_model_by_name(name: str):
+    models = {
+        "users": User,
+        "orders": Order,
+        "sysdata": Sysdata,
+        "promocode": Promoсode,
+    }
+    return models.get(name)
 
-@router.get("/orders/", response_model=List[OrderGet])
-async def read_orders():
-    return await get_all_orders()
+@router.get("/admin/{model_name}/", response_class=HTMLResponse)
+async def list_records(model_name: str, request: Request):
+    admin_model = admin_models.get(model_name)
+    if not admin_model:
+        raise HTTPException(status_code=404, detail="Модель не найдена")
 
-@router.get("/orders/{order_id}", response_model=OrderGet)
-async def read_order_by_id(order_id: int):
-    order = await get_order_by_id(order_id)
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+    model = get_model_by_name(model_name)
+    if not model:
+        raise HTTPException(status_code=404, detail="Модель не найдена")
 
-@router.get("/{user_id}/orders", response_model=List[OrderGet])
-async def read_all_user_orders(user_id: int):
-    user = await get_user(user_id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    orders = await get_all_user_orders(user=user)
-    return orders
+    records = await model.all().values()
+    displayed_records = [
+        {field: record[field] for field in admin_model.display_fields} for record in records
+    ]
+
+    return templates.TemplateResponse("admin_list.html", {
+        "request": request, 
+        "records": displayed_records,
+        "model_name": model_name,
+        "admin_model": admin_model
+    })
+
+@router.get("/admin/{model_name}/{record_id}/", response_class=HTMLResponse)
+async def record_detail(model_name: str, record_id: int, request: Request):
+
+    admin_model = admin_models.get(model_name)
+    if not admin_model:
+        raise HTTPException(status_code=404, detail="Модель не найдена")
+
+    model = get_model_by_name(model_name)
+    if not model:
+        raise HTTPException(status_code=404, detail="Модель не найдена")
+
+    record = await model.filter(id=record_id).select_related(*admin_model.related_fields).first()
+
+    detailed_record = {field: getattr(record, field) for field in admin_model.detail_fields}
+
+    return templates.TemplateResponse("admin_detail.html", {
+        "request": request, 
+        "record": detailed_record,
+        "model_name": model_name,
+        "admin_model": admin_model
+    })
+
+@router.put("/admin/{model_name}/update/{record_id}/")
+async def update_record(model_name: str, record_id: int, request: Request):
+    model = get_model_by_name(model_name)
+    if not model:
+        raise HTTPException(status_code=404, detail="Модель не найдена")
+
+    data = await request.json()
+
+    try:
+        record = await model.get(id=record_id)
+    except model.DoesNotExist:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+
+    for field, value in data.items():
+        if hasattr(record, field):
+            setattr(record, field, value)
+
+    await record.save()
+    return JSONResponse({"status": "success", "message": "Запись успешно обновлена"})
+
+@router.delete("/admin/{model_name}/delete/{record_id}/")
+async def delete_record(model_name: str, record_id: int):
+    model = get_model_by_name(model_name)
+    if not model:
+        raise HTTPException(status_code=404, detail="Модель не найдена")
+
+    record = await model.get(id=record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Запись не найдена")
+
+    await record.delete()
+
+    return {"status": "success", "message": "Запись успешно удалена"}

@@ -9,7 +9,7 @@ class Sysdata(models.Model):
     class Meta:
         table = "sysdata"
 
-class PromoCode(models.Model):
+class Promoсode(models.Model):
     code = fields.CharField(max_length=50, unique=True)  # Код промокода
     discount_type = fields.CharField(max_length=20)  # Тип скидки (например: "обучение", "конвертация")
     one_time = fields.BooleanField(default=False)  # Одноразовый

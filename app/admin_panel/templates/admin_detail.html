@@ -1,0 +1,102 @@
+{% extends "main.html" %}
+
+{% block content %}
+<h2 class="mb-4">Изменить запись: <strong>{{ admin_model.model_name }}</strong> - {{ record.id }}</h2>
+
+<form id="update-form">
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <tbody>
+                {% for field in admin_model.detail_fields %}
+                    {% set field_obj = admin_model.fields | selectattr("name", "equalto", field) | first %}
+                    
+                    {% if field_obj.editable %}
+                        <tr>
+                            <th class="align-middle">{{ field_obj.display_name or field }}</th>
+                            <td>
+                                <input type="text" name="{{ field }}" value="{{ record[field] }}" class="form-control" required>
+                            </td>
+                        </tr>
+                    {% elif field_obj.related_model %}
+                        <tr>
+                            <th class="align-middle">{{ field_obj.display_name or field }}</th>
+                            <td>
+                                <a href="/admin/{{ field_obj.related_model }}/{{ record[field].id }}" class="text-decoration-none">
+                                    {{ record[field].username or record[field].id }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <th class="align-middle">{{ field_obj.display_name or field }}</th>
+                            <td>{{ record[field] }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-save"></i> Сохранить изменения
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" id="delete-btn">
+            <i class="bi bi-trash"></i> Удалить запись
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#update-form").on("submit", function(e) {
+            e.preventDefault();
+    
+            var data = {};
+            $(this).find("input").each(function() {
+                data[$(this).attr("name")] = $(this).val();
+            });
+    
+            var modelName = "{{ admin_model.model_name }}";
+            var recordId = "{{ record.id }}";
+    
+            $.ajax({
+                url: "/admin/" + modelName + "/update/" + recordId + "/",
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(response) {
+                    alert("Запись успешно обновлена!");
+                },
+                error: function(xhr, status, error) {
+                    console.error("Ошибка:", error);
+                    alert("Произошла ошибка при обновлении записи.");
+                }
+            });
+        });
+    
+        $("#delete-btn").on("click", function() {
+            if (confirm("Вы уверены, что хотите удалить эту запись?")) {
+                var modelName = "{{ admin_model.model_name }}";
+                var recordId = "{{ record.id }}";
+    
+                $.ajax({
+                    url: "/admin/" + modelName + "/delete/" + recordId + "/",
+                    type: "DELETE",
+                    success: function(response) {
+                        alert("Запись успешно удалена!");
+                        window.location.href = "/admin/" + modelName + "/";
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Ошибка:", error);
+                        alert("Произошла ошибка при удалении записи.");
+                    }
+                });
+            }
+        });
+    });
+    </script>
+{% endblock %}
