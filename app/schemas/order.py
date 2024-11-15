@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Optional
 from datetime import datetime
 from app.db.models.user import User
+from app.db.models.order import OrderStatus
 
 class OrderCreate(BaseModel):
     user: User
@@ -19,8 +20,19 @@ class OrderGet(BaseModel):
     contact_method: Optional[str] = None
     currency: str = Field(..., max_length=10)
     amount: Decimal
+    status: OrderStatus
     exchange_currency: str = Field(..., max_length=10)
     exchange_rate: Decimal
     date_created: datetime
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    def status_display(self):
+        return {
+            OrderStatus.CREATING: "Создан",
+            OrderStatus.PROCESSING: "В обработке",
+            OrderStatus.COMPLETED: "Выполнен",
+            OrderStatus.CANCELED: "Отменен",
+        }.get(self.status, self.status.value)
+
+    class Config:
+        use_enum_values = True
+        arbitrary_types_allowed = True

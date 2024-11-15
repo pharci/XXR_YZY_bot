@@ -1,0 +1,90 @@
+{% extends "main.html" %}
+
+{% block content %}
+<h2 class="mb-4">Создать новую запись для <strong>{{ admin_model.model_name }}</strong></h2>
+
+<form id="create-form">
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <tbody>
+                {% for field in fields %}
+                    {% set field_obj = field %}
+
+                    <tr>
+                        <th class="align-middle">{{ field_obj.display_name or field_obj.name }}</th>
+                        <td>
+                            {% if field_obj.type == "bool" %}
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" name="{{ field_obj.name }}" id="{{ field_obj.name }}" value="true" {% if field_obj.required %} required {% endif %}>
+                                    <label class="form-check-label" for="{{ field_obj.name }}">
+                                        {{ field_obj.display_name or field_obj.name }}
+                                    </label>
+                                    {% if field_obj.text %}
+                                        <span> - {{ field_obj.text }}</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <input type="text" name="{{ field_obj.name }}" class="form-control" placeholder="{{ field_obj.text }}" {% if field_obj.required %} required {% endif %}>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-save"></i> Создать запись
+        </button>
+        <a href="/admin/{{ admin_model.model_name }}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Назад
+        </a>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $("#create-form").on("submit", function(e) {
+            e.preventDefault();
+            
+            var data = {};
+            var emptyFields = [];
+
+            $(this).find("input").each(function() {
+                var value = $(this).is(":checkbox") ? $(this).prop("checked") : $(this).val();
+                data[$(this).attr("name")] = value;
+
+                if (!value && !$(this).is(":checkbox")) {
+                    emptyFields.push($(this).attr("name"));
+                }
+            });
+
+            if (emptyFields.length > 0) {
+                alert("Пожалуйста, заполните все поля: " + emptyFields.join(", "));
+                return;
+            }
+
+            var modelName = "{{ admin_model.model_name }}";
+
+            $.ajax({
+                url: "/admin/" + modelName + "/create/",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(response) {
+                    alert("Запись успешно создана!");
+                    window.location.href = "/admin/{{ admin_model.model_name }}/";
+                },
+                error: function(xhr, status, error) {
+                    console.error("Ошибка:", error);
+                    alert("Произошла ошибка при создании записи.");
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

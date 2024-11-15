@@ -13,10 +13,14 @@ aiosqlite = "^0.20.0"
 pydantic = "^2.9.2"
 uvicorn = "^0.32.0"
 pydantic-settings = "^2.6.1"
-tortoise-orm = "^0.21.7"
+tortoise-orm = {extras = ["postgres"], version = "^0.21.7"}
 jinja2 = "^3.1.4"
+itsdangerous = "^2.2.0"
+pyjwt = "^2.9.0"
+aerich = "^0.7.2"
+asyncpg = "^0.30.0"
 
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.aerich]
+tortoise_orm = "app.core.config.TORTOISE_ORM"
+location = "./migrations"
+src_folder = "./."

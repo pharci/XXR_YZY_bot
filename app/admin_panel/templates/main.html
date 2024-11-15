@@ -7,124 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        /* Обновленный общий стиль */
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #343a40;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        /* Верхний хедер */
-        header {
-            background-color: #1c1f23;
-            color: #af8dfc;
-            padding: 20px 0 0 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        header h2 {
-            font-size: 1.8rem;
-            margin: 0;
-        }
-        /* Навигационное меню */
-        .nav {
-            justify-content: center;
-            margin-top: 10px;
-        }
-        .nav-link {
-            color: #af8dfc;
-            font-size: 1.1rem;
-            padding: 10px 20px;
-        }
-        .nav-link:hover {
-            background-color: #495057;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        .nav-item {
-            margin: 0 10px;
-        }
-        /* Контейнер для контента */
-        .container {
-            flex: 1;
-            margin-top: 20px;
-        }
-        /* Заголовки для секций */
-        h2 {
-            font-size: 1.6rem;
-            color: #af8dfc;
-        }
-        /* Стили для таблиц и кнопок */
-        .table {
-            border-radius: 10px;
-            overflow: hidden;
-            background-color: #1c1f23;
-        }
-        .table th, .table td {
-            padding: 15px;
-            vertical-align: middle;
-            color: white;
-        }
-        .table-striped thead tr:nth-of-type(odd) {
-            background-color: #1c1f23;
-        }
-        .table-striped tbody tr:nth-of-type(odd) {
-            background-color: #292d33;
-        }
-        .table-bordered th, .table-bordered td {
-            border-bottom: none!important;
-            border: 1px solid #3f474f;
-        }
-        .table-bordered th .form-control, .table-bordered td .form-control {
-            background-color: #292d33;
-            border: 2px solid #505862;
-            color: white;
-        }
-        .btn {
-            border-radius: 5px;
-            transition: background-color 0.3s ease, opacity 0.3s ease;
-        }
-        .btn:hover {
-            opacity: 0.9;
-        }
-        .btn-info {
-            background-color: #17a2b8;
-            border: 1px solid #17a2b8;
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            border: 1px solid #dc3545;
-        }
-        .save-btn, .delete-btn {
-            margin-left: 10px;
-        }
-        .save-btn:hover, .delete-btn:hover {
-            opacity: 0.8;
-        }
-        /* Футер */
-        footer {
-            background-color: #1c1f23;
-            color: #af8dfc;
-            text-align: center;
-            padding: 15px;
-            margin-top: auto;
-        }
-        footer p {
-            margin: 0;
-        }
-        /* Адаптивность */
-        @media (max-width: 767px) {
-            .nav-link {
-                font-size: 1rem;
-            }
-            .table td, .table th {
-                font-size: 0.9rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
     <header>
@@ -136,6 +19,12 @@
                 <li class="nav-item"><a class="nav-link" href="/admin/orders">Заказы</a></li>
                 <li class="nav-item"><a class="nav-link" href="/admin/sysdata">Конвертация</a></li>
                 <li class="nav-item"><a class="nav-link" href="/admin/promocode">Промокоды</a></li>
+                <li class="nav-item">
+                    <button id="theme-toggle" class="btn-theme-toggle"><i class="fas fa-sun"></i></button>
+                </li>
+                <li>
+                    <a class="nav-link" href="/logout">Выход</a>
+                </li>
             </ul>
         </nav>
     </header>
@@ -150,5 +39,56 @@
     </footer>
     {% block scripts %}
     {% endblock %}
+    <script>
+        function setTheme(theme) {
+            document.body.classList.remove('dark-mode', 'light-mode');
+            document.body.classList.add(theme);
+        
+            // Добавляем/удаляем dark-mode или light-mode для таблиц
+            const tables = document.querySelectorAll('.table');
+            tables.forEach(table => {
+                table.classList.remove('dark-mode', 'light-mode');
+                table.classList.add(theme);
+            });
+        
+            // Установка темы для header и footer
+            document.querySelector('header').classList.toggle('dark-mode', theme === 'dark-mode');
+            document.querySelector('footer').classList.toggle('dark-mode', theme === 'dark-mode');
+            document.querySelector('header').classList.toggle('light-mode', theme === 'light-mode');
+            document.querySelector('footer').classList.toggle('light-mode', theme === 'light-mode');
+            
+            // Сохраняем тему в localStorage
+            localStorage.setItem('theme', theme);
+            
+            // Обновляем иконку кнопки в зависимости от темы
+            const icon = document.querySelector('#theme-toggle i');
+            if (theme === 'dark-mode') {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            } else {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+                }
+            });
+
+            const savedTheme = localStorage.getItem('theme') || 'light-mode';
+            setTheme(savedTheme);
+        
+            document.getElementById('theme-toggle').addEventListener('click', () => {
+                const currentTheme = document.body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode';
+                const newTheme = currentTheme === 'light-mode' ? 'dark-mode' : 'light-mode';
+                setTheme(newTheme);
+            });
+        });
+    </script>
 </body>
 </html>

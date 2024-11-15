@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход через Telegram</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .auth-container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            color: #343a40;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #6c757d;
+            font-size: 1em;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h2>XXR_YZY Admin</h2>
+        <p>Для входа используйте Telegram:</p>
+        <!-- Telegram виджет авторизации -->
+        <script async src="https://telegram.org/js/telegram-widget.js?15" 
+            data-telegram-login="patternfastbot" 
+            data-size="large" 
+            data-auth-url="/login" 
+            data-request-access="write"></script>
+    </div>
+</body>
+</html>

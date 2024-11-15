@@ -7,7 +7,7 @@ from .handlers.commands.start import router as r_st
 from .handlers.callbacks.exchange import router as r_ex
 from .handlers.callbacks.profile import router as r_pr
 
-bot = Bot(token=settings.telegram_token)
+bot = Bot(token=settings.TELEGRAM_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 

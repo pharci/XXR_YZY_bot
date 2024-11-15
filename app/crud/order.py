@@ -1,4 +1,4 @@
-from app.db.models.order import Order
+from app.db.models.order import Order, OrderStatus
 from app.schemas.order import OrderCreate
 import random
 from typing import List
@@ -15,6 +15,7 @@ async def create_order(order_data: OrderCreate) -> Order:
         order_id=order_id,
         contact_method=order_data.contact_method,
         currency=order_data.currency,
+        status=OrderStatus.CREATING,
         amount=order_data.amount,
         exchange_currency=order_data.exchange_currency,
         exchange_rate=order_data.exchange_rate

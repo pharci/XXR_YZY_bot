@@ -87,6 +87,7 @@ async def currency_input(call: types.CallbackQuery, state: FSMContext):
 @router.message(F.contact, Form.contact)
 async def finish(message: types.Message, state: FSMContext): 
     user_data = await state.get_data()
+
     data = await get_currency_by_id(user_data['currency_id'])
 
     user = await get_user(message.from_user.id)

@@ -1,17 +1,16 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from app.db.models import *
 from app.db.admin import admin_models
+from .auth import get_current_user
+from datetime import datetime
+from typing import Optional
 
 templates = Jinja2Templates(directory="app/admin_panel/templates")
 
 router = APIRouter()
-
-@router.get("/admin", response_class=HTMLResponse)
-async def admin_dashboard(request: Request):
-    return templates.TemplateResponse("main.html", {"request": request})
 
 def get_model_by_name(name: str):
     models = {
@@ -22,8 +21,26 @@ def get_model_by_name(name: str):
     }
     return models.get(name)
 
-@router.get("/admin/{model_name}/", response_class=HTMLResponse)
-async def list_records(model_name: str, request: Request):
+def datetime_format(value, format="%d.%m.%Y %H:%M:%S"):
+    if isinstance(value, datetime):
+        return value.strftime(format)
+    return value
+templates.env.filters["strftime"] = datetime_format
+
+
+@router.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request, user: dict = Depends(get_current_user)):
+    return templates.TemplateResponse("main.html", {"request": request})
+
+
+@router.get("/admin/{model_name}", response_class=HTMLResponse)
+async def list_records(
+    model_name: str, 
+    request: Request, 
+    user: dict = Depends(get_current_user),
+    text_filter: Optional[str] = None, 
+    select_filter: Optional[str] = None
+):
     admin_model = admin_models.get(model_name)
     if not admin_model:
         raise HTTPException(status_code=404, detail="Модель не найдена")
@@ -32,20 +49,36 @@ async def list_records(model_name: str, request: Request):
     if not model:
         raise HTTPException(status_code=404, detail="Модель не найдена")
 
-    records = await model.all().values()
-    displayed_records = [
-        {field: record[field] for field in admin_model.display_fields} for record in records
+    query = model.all()
+
+    if text_filter:
+        query = query.filter(**{admin_model.filter: text_filter})
+    
+    if select_filter:
+        query = query.filter(**{admin_model.filter_btn: select_filter})
+
+    records = await query.values()
+
+    displayed_records = [{
+        field: (record[field].value if isinstance(record[field], OrderStatus) else record[field])
+        for field in admin_model.display_fields
+    }
+        for record in records
     ]
 
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JSONResponse({"records": displayed_records})
+    
     return templates.TemplateResponse("admin_list.html", {
-        "request": request, 
+        "request": request,
         "records": displayed_records,
         "model_name": model_name,
-        "admin_model": admin_model
+        "admin_model": admin_model,
+        "user": user,
     })
 
-@router.get("/admin/{model_name}/{record_id}/", response_class=HTMLResponse)
-async def record_detail(model_name: str, record_id: int, request: Request):
+@router.get("/admin/{model_name}/{record_id}", response_class=HTMLResponse)
+async def record_detail(model_name: str, record_id: int, request: Request, user: dict = Depends(get_current_user)):
 
     admin_model = admin_models.get(model_name)
     if not admin_model:
@@ -63,10 +96,11 @@ async def record_detail(model_name: str, record_id: int, request: Request):
         "request": request, 
         "record": detailed_record,
         "model_name": model_name,
-        "admin_model": admin_model
+        "admin_model": admin_model,
+        "user": user,
     })
 
-@router.put("/admin/{model_name}/update/{record_id}/")
+@router.put("/admin/{model_name}/update/{record_id}")
 async def update_record(model_name: str, record_id: int, request: Request):
     model = get_model_by_name(model_name)
     if not model:
@@ -86,7 +120,8 @@ async def update_record(model_name: str, record_id: int, request: Request):
     await record.save()
     return JSONResponse({"status": "success", "message": "Запись успешно обновлена"})
 
-@router.delete("/admin/{model_name}/delete/{record_id}/")
+
+@router.delete("/admin/{model_name}/delete/{record_id}")
 async def delete_record(model_name: str, record_id: int):
     model = get_model_by_name(model_name)
     if not model:
@@ -99,3 +134,38 @@ async def delete_record(model_name: str, record_id: int):
     await record.delete()
 
     return {"status": "success", "message": "Запись успешно удалена"}
+
+
+@router.get("/admin/{model_name}/create/")
+async def create_record_page(model_name: str, request: Request):
+    admin_model = admin_models.get(model_name)
+    if not admin_model:
+        raise HTTPException(status_code=404, detail="Модель не найдена")
+    if not admin_model.create_records:
+        raise HTTPException(status_code=404, detail="Доступ запрещен")
+    
+    fields = [field for field in admin_model.fields if field.editable]
+
+    return templates.TemplateResponse("create_record.html", {
+        "request": request,
+        "admin_model": admin_model,
+        "fields": fields,
+    })
+
+
+@router.post("/admin/{model_name}/create/")
+async def create_record(model_name: str, request: Request):
+    admin_model = admin_models.get(model_name)
+    if not admin_model:
+        raise HTTPException(status_code=404, detail="Модель не найдена")
+
+    data = await request.json()
+
+    model = get_model_by_name(model_name)
+    record = model(**data)
+
+    await record.save()
+
+    print(record)
+
+    return JSONResponse({"status": "success", "message": "Запись успешно создана"})
