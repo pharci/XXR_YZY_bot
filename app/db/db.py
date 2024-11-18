@@ -15,6 +15,6 @@ def init_db_fastapi(app):
         app,
         db_url=settings.DATABASE_URL,
         modules={"models": ["app.db.models"]},
-        generate_schemas=True,  # автоматически создать схемы, если их нет
+        generate_schemas=True,
         add_exception_handlers=True,
     )

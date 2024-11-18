@@ -9,65 +9,12 @@
             <tbody>
                 {% for field in admin_model.detail_fields %}
                     {% set field_obj = admin_model.fields | selectattr("name", "equalto", field) | first %}
-            
-                    {% if field_obj.editable %}
                         <tr>
                             <th class="align-middle">{{ field_obj.display_name or field }}</th>
                             <td>
-                                {% if field_obj.type == "bool" %}
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" class="form-check-input" name="{{ field }}" id="{{ field }}"
-                                            value="true" {% if record[field] %} checked {% endif %}
-                                            {% if not user.is_superuser %}disabled{% endif %}>
-                                        <label class="form-check-label" for="{{ field }}">
-                                            {{ field_obj.display_name or field }}
-                                        </label>
-                                    </div>
-                                {% elif field_obj.type == "date" %}
-                                    {{ record[field]|strftime("%d.%m.%Y %H:%M:%S") }}
-                                {% elif field_obj.choices %}
-                                    <!-- Выпадающий список для выбора значения из вариантов -->
-                                    <select name="{{ field }}" class="form-control" {% if not user.is_superuser %}disabled{% endif %}>
-                                        {% for option in field_obj.choices %}
-                                            <option value="{{ option }}" {% if record[field] == option %}selected{% endif %}>
-                                                {{ option }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                {% else %}
-                                    <input type="text" name="{{ field }}" value="{{ record[field] }}" placeholder="{{ field_obj.text }}" class="form-control" required>
-                                {% endif %}
+                                <input type="text" name="{{ field }}" value="{{ record[field] }}" placeholder="{{ field_obj.text }}" class="form-control" required>
                             </td>
                         </tr>
-                    {% elif field_obj.related_model %}
-                        <tr>
-                            <th class="align-middle">{{ field_obj.display_name or field }}</th>
-                            <td>
-                                <a href="/admin/{{ field_obj.related_model }}/{{ record[field].id }}" class="text-decoration-none">
-                                    {{ record[field].username or record[field].id }}
-                                </a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <th class="align-middle">{{ field_obj.display_name or field }}</th>
-                            <td>
-                                {% if field_obj.type == "bool" %}
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" class="form-check-input" name="{{ field }}" id="{{ field }}"
-                                            value="true" {% if record[field] %} checked {% endif %} disabled>
-                                        <label class="form-check-label" for="{{ field }}">
-                                            {{ field_obj.display_name or field }}
-                                        </label>
-                                    </div>
-                                {% elif field_obj.type == "date" %}
-                                    {{ record[field]|strftime("%d.%m.%Y %H:%M:%S") }}
-                                {% else %}
-                                    {{ record[field] }}
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endif %}
                 {% endfor %}
             </tbody>
         </table>

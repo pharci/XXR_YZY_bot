@@ -25,14 +25,6 @@ class OrderGet(BaseModel):
     exchange_rate: Decimal
     date_created: datetime
 
-    def status_display(self):
-        return {
-            OrderStatus.CREATING: "Создан",
-            OrderStatus.PROCESSING: "В обработке",
-            OrderStatus.COMPLETED: "Выполнен",
-            OrderStatus.CANCELED: "Отменен",
-        }.get(self.status, self.status.value)
-
     class Config:
         use_enum_values = True
         arbitrary_types_allowed = True

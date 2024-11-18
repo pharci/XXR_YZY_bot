@@ -1,31 +1,47 @@
-from tortoise import fields, models
-from pytz import timezone
-from enum import Enum
-
-class OrderStatus(str, Enum):
-    CREATING = "Создан"
-    PROCESSING = "В обработке"
-    COMPLETED = "Выполнен"
-    CANCELED = "Отменен"
-
-class Order(models.Model):
-    user = fields.ForeignKeyField("models.User", related_name='orders', on_delete=fields.CASCADE)
-    order_id = fields.IntField(unique=True)
-    status = fields.CharEnumField(OrderStatus, default=OrderStatus.CREATING)
-    contact_method = fields.CharField(max_length=255, null=True)
-    currency = fields.CharField(max_length=10, default="Rub") 
-    amount = fields.DecimalField(max_digits=10, decimal_places=2) 
-    exchange_currency = fields.CharField(max_length=10)
-    exchange_rate = fields.DecimalField(max_digits=10, decimal_places=4)
-    date_created = fields.DatetimeField(auto_now_add=True)
+from tortoise import fields
+from tortoise.models import Model
     
+class Order(Model):
+    id = fields.IntField(pk=True)
+    user = fields.ForeignKeyField("models.User", related_name="orders", on_delete=fields.CASCADE)
+    order_id = fields.IntField(unique=True)
+    status = fields.ForeignKeyField("models.OrderStatus", related_name="orders")
+    type = fields.ForeignKeyField("models.OrderType", related_name="orders")
+    contact_method = fields.CharField(max_length=255)
+    amount = fields.DecimalField(max_digits=10, decimal_places=2)
+    conversion = fields.ForeignKeyField("models.Conversion", related_name="orders", null=True)
+    exchange_rate = fields.DecimalField(max_digits=10, decimal_places=6, null=True)
+    promocode = fields.ForeignKeyField("models.Promocode", related_name="orders", null=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+
     class Meta:
         table = "orders"
+        table_description = "Заказы"
 
-    def date_of_created(self):
-        # Установим московское время
-        moscow_tz = timezone("Europe/Moscow")
-        
-        # Переведём дату в московское время и отформатируем
-        dt_moscow = self.date_created.astimezone(moscow_tz)
-        return dt_moscow.strftime("%d.%m.%Y %H:%M")
+    def __str__(self):
+        return self.order_id
+    
+class OrderType(Model):
+    id = fields.IntField(pk=True)
+    name = fields.CharField(max_length=255)
+    description = fields.TextField(null=True)
+
+    class Meta:
+        table = "order_types"
+        table_description = "Типы заказов"
+
+    def __str__(self):
+        return self.name
+
+class OrderStatus(Model):
+    id = fields.IntField(pk=True)
+    name = fields.CharField(max_length=255)
+    description = fields.TextField(null=True)
+
+    class Meta:
+        table = "order_statuses"
+        table_description = "Статусы заказов"
+
+    def __str__(self):
+        return self.name

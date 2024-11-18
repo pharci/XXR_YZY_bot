@@ -49,7 +49,7 @@ async def get_current_user(request: Request):
         
         if not user_id:
             raise HTTPException(status_code=403, detail="Invalid token: User ID not found")
-        return {"user_id": user_id, "is_staff": user.is_staff, "is_superuser": user.is_superuser}
+        return {"user_id": user_id }
     
     except jwt.PyJWTError:
         raise HTTPException(status_code=403, detail="Could not validate credentials")

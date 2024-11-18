@@ -7,27 +7,40 @@
     <div class="table-responsive">
         <table class="table table-bordered table-striped">
             <tbody>
-                {% for field in fields %}
-                    {% set field_obj = field %}
-
-                    <tr>
-                        <th class="align-middle">{{ field_obj.display_name or field_obj.name }}</th>
-                        <td>
-                            {% if field_obj.type == "bool" %}
-                                <div class="form-check form-switch">
-                                    <input type="checkbox" class="form-check-input" name="{{ field_obj.name }}" id="{{ field_obj.name }}" value="true" {% if field_obj.required %} required {% endif %}>
-                                    <label class="form-check-label" for="{{ field_obj.name }}">
-                                        {{ field_obj.display_name or field_obj.name }}
-                                    </label>
-                                    {% if field_obj.text %}
-                                        <span> - {{ field_obj.text }}</span>
-                                    {% endif %}
-                                </div>
-                            {% else %}
-                                <input type="text" name="{{ field_obj.name }}" class="form-control" placeholder="{{ field_obj.text }}" {% if field_obj.required %} required {% endif %}>
-                            {% endif %}
-                        </td>
-                    </tr>
+                {% for field in admin_model.fields %}
+                    {% if field.related_model %}
+                        <tr>
+                            <th>{{ field.display_name or field.name }}</th>
+                            <td>
+                                {% if field.multiple %}
+                                    <!-- Many-to-Many -->
+                                    <select name="{{ field.name }}" multiple class="form-control">
+                                        {% for option in related_data[field.related_model] %}
+                                            <option value="{{ option.id }}">{{ option }}</option>
+                                        {% endfor %}
+                                    </select>
+                                {% else %}
+                                    <!-- ForeignKey или One-to-One -->
+                                    <select name="{{ field.name }}" class="form-control">
+                                        <option value="">Выберите значение</option>
+                                        {% for option in related_data[field.related_model] %}
+                                            <option value="{{ option.id }}">
+                                                {{ option }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <!-- Поле ввода для обычных данных -->
+                        <tr>
+                            <th>{{ field.display_name or field.name }}</th>
+                            <td>
+                                <input type="text" name="{{ field.name }}" class="form-control" />
+                            </td>
+                        </tr>
+                    {% endif %}
                 {% endfor %}
             </tbody>
         </table>

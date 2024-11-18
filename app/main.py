@@ -22,7 +22,7 @@ app.add_middleware(
 )
 
 app.add_middleware(CacheControlMiddleware)
-app.add_middleware(AuthMiddleware)
+# app.add_middleware(AuthMiddleware)
 
 app.include_router(user.router)
 app.include_router(bot_rout.router)

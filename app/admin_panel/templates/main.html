@@ -15,10 +15,29 @@
         <nav>
             <ul class="nav">
                 <li class="nav-item"><a class="nav-link" href="/admin/">Главная</a></li>
-                <li class="nav-item"><a class="nav-link" href="/admin/users">Пользователи</a></li>
-                <li class="nav-item"><a class="nav-link" href="/admin/orders">Заказы</a></li>
-                <li class="nav-item"><a class="nav-link" href="/admin/sysdata">Конвертация</a></li>
-                <li class="nav-item"><a class="nav-link" href="/admin/promocode">Промокоды</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/user">Пользователи</a>
+                    <ul class="nav sub-menu">
+                        <li class="sub-nav-item"><a class="nav-link" href="/admin/useractivity">Активность</a></li>
+                        <li class="sub-nav-item"><a class="nav-link" href="/admin/userrole">Сотрудники</a></li>
+                        <li class="sub-nav-item"><a class="nav-link" href="/admin/role">Роли</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/admin/order">Заказы</a>
+                    <ul class="nav sub-menu">
+                        <li class="sub-nav-item"><a class="nav-link" href="/admin/orderstatus">Статусы</a></li>
+                        <li class="sub-nav-item"><a class="nav-link" href="/admin/orderType">Типы</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/admin/conversion">Конвертация</a>
+                    <ul class="nav sub-menu">
+                        <li class="sub-nav-item"><a class="nav-link" href="/admin/graduations">Градация</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/admin/promocode">Промокоды</a>
+                    <ul class="nav sub-menu">
+                        <li class="sub-nav-item"><a class="nav-link" href="/admin/promocodeusage">Активность</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item">
                     <button id="theme-toggle" class="btn-theme-toggle"><i class="fas fa-sun"></i></button>
                 </li>
@@ -56,7 +75,7 @@
             document.querySelector('footer').classList.toggle('dark-mode', theme === 'dark-mode');
             document.querySelector('header').classList.toggle('light-mode', theme === 'light-mode');
             document.querySelector('footer').classList.toggle('light-mode', theme === 'light-mode');
-            
+
             // Сохраняем тему в localStorage
             localStorage.setItem('theme', theme);
             
