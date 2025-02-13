@@ -15,17 +15,18 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
     
-    def get_5_orders(self):
+    def get_orders(self):
         from datetime import timedelta  # Импорт тут, чтобы избежать циклических импортов
 
-        orders = self.orders.select_related("currency").order_by("-created_at")[:5]
+        orders = self.orders.select_related("currency").order_by("-created_at")
 
         if not orders:
-            return "У вас пока нет заказов."
+            return None
+        
+        orders_text = []
 
-        orders_text = "<b>Ваши последние 5 заказов:</b>\n\n"
         for order in orders:
-            orders_text += (
+            orders_text.append(
                 f"<b>Заказ №<code>{order.order_id}</code></b>\n"
                 f"<b>📝 Дата заказа:</b> {order.created_at + timedelta(hours=3):%d.%m.%Y %H:%M}\n"
                 f"<b>📝 Статус:</b> {order.status}\n"
@@ -34,7 +35,6 @@ class User(AbstractUser):
                 f"<b>🔄 Получено:</b> { round(order.amount_output, 0) } {order.currency.exchange_currency}\n"
                 f"<b>📊 Курс обмена:</b> {order.exchange_rate}\n"
                 f"<b>🎟️ Промокод:</b> {order.promocode_usages.first().promocode.code if order.promocode_usages.exists() else 'Нет'}\n"
-                f"<i>━━━━━━━━━━━━━━━━━━</i>\n"
             )
         return orders_text
         

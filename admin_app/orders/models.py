@@ -108,5 +108,3 @@ class PromocodeUsage(models.Model):
 
     def __str__(self):
         return f"{self.promocode.code} - {self.user}"
-
-

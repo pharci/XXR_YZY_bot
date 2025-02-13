@@ -288,6 +288,20 @@ files = [
 ]
 
 [[package]]
+name = "diff-match-patch"
+version = "20241021"
+description = "Repackaging of Google's Diff Match and Patch libraries."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "diff_match_patch-20241021-py3-none-any.whl", hash = "sha256:93cea333fb8b2bc0d181b0de5e16df50dd344ce64828226bda07728818936782"},
+    {file = "diff_match_patch-20241021.tar.gz", hash = "sha256:beae57a99fa48084532935ee2968b8661db861862ec82c6f21f4acdd6d835073"},
+]
+
+[package.extras]
+dev = ["attribution (==1.8.0)", "black (==24.8.0)", "build (>=1)", "flit (==3.9.0)", "mypy (==1.12.1)", "ufmt (==2.7.3)", "usort (==1.0.8.post1)"]
+
+[[package]]
 name = "django"
 version = "5.1.6"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
@@ -306,6 +320,76 @@ tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 [package.extras]
 argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
+
+[[package]]
+name = "django-admin-column-toggle"
+version = "0.4.2"
+description = "A reusable Django package to add column toggle functionality in the Django admin interface."
+optional = false
+python-versions = "<4.0,>=3.8"
+files = [
+    {file = "django_admin_column_toggle-0.4.2-py3-none-any.whl", hash = "sha256:62eaba6842ae923dd6dbbcecb885200636590e49fa57fab61e015ac602cb46f1"},
+    {file = "django_admin_column_toggle-0.4.2.tar.gz", hash = "sha256:ffad9da0cc9d1173486430c3cb93075fed0cd24bde8c12e1653aeca2b3c2a279"},
+]
+
+[package.dependencies]
+django = ">=4.2"
+
+[[package]]
+name = "django-admin-interface"
+version = "0.29.4"
+description = "django's default admin interface with superpowers - customizable themes, popup windows replaced by modals and many other features."
+optional = false
+python-versions = "*"
+files = [
+    {file = "django_admin_interface-0.29.4-py3-none-any.whl", hash = "sha256:4635a28ece1cdf05f6b43152c8d8daa4d4c5a1ffd87e94f5a4cefc77a07cea4e"},
+    {file = "django_admin_interface-0.29.4.tar.gz", hash = "sha256:b4f1f00bd287e312a8371c902840cad6bc74809589e6aaf1a3346b70582b5b84"},
+]
+
+[package.dependencies]
+django-colorfield = ">=0.8.0,<1.0.0"
+python-slugify = ">=7.0.0,<9.0.0"
+
+[[package]]
+name = "django-colorfield"
+version = "0.12.0"
+description = "color field for django models with a nice color-picker in the admin."
+optional = false
+python-versions = "*"
+files = [
+    {file = "django_colorfield-0.12.0-py3-none-any.whl", hash = "sha256:ceb9a312e01773a0d609847eb308e3b81ac18c33874d17b2c7135a8d1b2ec86d"},
+    {file = "django_colorfield-0.12.0.tar.gz", hash = "sha256:9fbace0e3bf7126acab33daa52a5ae2fe0b339aeee30233f52bf911b685c0c71"},
+]
+
+[package.dependencies]
+Pillow = ">=9.0.0"
+
+[[package]]
+name = "django-import-export"
+version = "4.3.5"
+description = "Django application and library for importing and exporting data with included admin integration."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "django_import_export-4.3.5-py3-none-any.whl", hash = "sha256:143611d9d3c8b000c54e33db122c8d283eef38167acd7a854d15b9ad77c328e7"},
+    {file = "django_import_export-4.3.5.tar.gz", hash = "sha256:61e078cea307a6199a7e905840640e55db3521d7c81be224fd8b6576ce9bd0fc"},
+]
+
+[package.dependencies]
+diff-match-patch = "20241021"
+Django = ">=4.2"
+tablib = ">=3.7.0"
+
+[package.extras]
+all = ["tablib[all]"]
+cli = ["tablib[cli]"]
+docs = ["openpyxl (==3.1.5)", "sphinx (==8.1.3)", "sphinx-rtd-theme (==3.0.1)"]
+ods = ["tablib[ods]"]
+pandas = ["tablib[pandas]"]
+tests = ["chardet (==5.2.0)", "coverage (==7.6.4)", "django-extensions (==3.2.3)", "memory-profiler (==0.61.0)", "mysqlclient (==2.2.5)", "psycopg2-binary (==2.9.10)", "pytz (==2024.2)", "setuptools-scm (==8.1.0)", "tablib[all] (>=3.7.0)"]
+xls = ["tablib[xls]"]
+xlsx = ["tablib[xlsx]"]
+yaml = ["tablib[yaml]"]
 
 [[package]]
 name = "django-nested-admin"
@@ -1041,6 +1125,23 @@ files = [
 ]
 
 [[package]]
+name = "python-slugify"
+version = "8.0.4"
+description = "A Python slugify application that also handles Unicode"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "python-slugify-8.0.4.tar.gz", hash = "sha256:59202371d1d05b54a9e7720c5e038f928f45daaffe41dd10822f3907b937c856"},
+    {file = "python_slugify-8.0.4-py2.py3-none-any.whl", hash = "sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8"},
+]
+
+[package.dependencies]
+text-unidecode = ">=1.3"
+
+[package.extras]
+unidecode = ["Unidecode (>=1.1.1)"]
+
+[[package]]
 name = "sniffio"
 version = "1.3.1"
 description = "Sniff out which async library your code is running under"
@@ -1082,6 +1183,37 @@ anyio = ">=3.6.2,<5"
 
 [package.extras]
 full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
+
+[[package]]
+name = "tablib"
+version = "3.8.0"
+description = "Format agnostic tabular data library (XLS, JSON, YAML, CSV, etc.)"
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "tablib-3.8.0-py3-none-any.whl", hash = "sha256:35bdb9d4ec7052232f8803908f9c7a9c3c65807188b70618fa7a7d8ccd560b4d"},
+    {file = "tablib-3.8.0.tar.gz", hash = "sha256:94d8bcdc65a715a0024a6d5b701a5f31e45bd159269e62c73731de79f048db2b"},
+]
+
+[package.extras]
+all = ["odfpy", "openpyxl (>=2.6.0)", "pandas", "pyyaml", "tabulate", "xlrd", "xlwt"]
+cli = ["tabulate"]
+ods = ["odfpy"]
+pandas = ["pandas"]
+xls = ["xlrd", "xlwt"]
+xlsx = ["openpyxl (>=2.6.0)"]
+yaml = ["pyyaml"]
+
+[[package]]
+name = "text-unidecode"
+version = "1.3"
+description = "The most basic Text::Unidecode port"
+optional = false
+python-versions = "*"
+files = [
+    {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
+    {file = "text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
+]
 
 [[package]]
 name = "typing-extensions"
@@ -1222,4 +1354,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "eed84e93e7fb17e149708553e44d5d70d3697c3ef7e254bfbcbcaef202cf8225"
+content-hash = "46ce8abecd7298cf6813f2a42112ca7dc803541ed765030cccad5daa6daa7254"

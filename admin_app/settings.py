@@ -5,10 +5,17 @@ BASE_DIR = Path(__file__).resolve().parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
 
+X_FRAME_OPTIONS = "SAMEORIGIN"
+SILENCED_SYSTEM_CHECKS = ["security.W019"]
+
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    "import_export",
+    'column_toggle',
+    "admin_interface",
+    "colorfield",
     "nested_admin",
     'django.contrib.admin',
     'django.contrib.auth',

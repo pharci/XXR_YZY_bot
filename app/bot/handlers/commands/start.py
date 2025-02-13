@@ -12,7 +12,7 @@ from app.repository import DjangoRepo
 router = Router()
 
 @router.message(Command("start"))
-async def start(message: types.Message):
+async def start(message: types.Message, state: FSMContext):
     photos = await bot.get_user_profile_photos(message.from_user.id)
     if photos.total_count > 0:
         photo = photos.photos[0][-1]
@@ -30,21 +30,23 @@ async def start(message: types.Message):
         })
 
     message_bot = await DjangoRepo.filter(Bot, message_id=1)
+
+    await state.clear()
     await message.answer(
         message_bot[0].text,
         disable_web_page_preview=True,
-        reply_markup=autokey({'Обмен валюты': 'Exchange', 'Обучение': 'Training', 'Профиль': 'Profile'})
+        reply_markup=autokey({'Обмен валюты': 'Exchange', 'Самовыкуп': 'Selfpay', 'Обучение': 'Training', 'Профиль': 'Profile'})
     )
 
 
 @router.callback_query(F.data == "start")
 async def start(call: types.CallbackQuery, state: FSMContext):
-    await state.clear()
 
     message_bot = await DjangoRepo.filter(Bot, message_id=1)
 
+    await state.clear()
     await call.message.edit_text(
         message_bot[0].text, 
         disable_web_page_preview=True,
-        reply_markup=autokey({'Обмен валюты': 'Exchange', 'Обучение': 'Training', 'Профиль': 'Profile'},
+        reply_markup=autokey({'Обмен валюты': 'Exchange', 'Самовыкуп': 'Selfpay', 'Обучение': 'Training', 'Профиль': 'Profile'},
         ))

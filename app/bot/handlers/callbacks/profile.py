@@ -6,7 +6,8 @@ from app.bot.keyboards.keyboards import autokey
 from admin_app.accounts.models import User
 from app.repository import DjangoRepo
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton 
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 
 router = Router()
@@ -18,20 +19,50 @@ class ContactState(StatesGroup):
 async def profile(call: types.CallbackQuery):
     user = await DjangoRepo.filter(User, telegram_id=call.message.chat.id)
     await call.message.edit_text(
-        f"ID: {user[0].telegram_id}\n"
-        f"username: @{user[0].username}\n"
-        f"Телефон: {user[0].contact}\n"
-        f"Дата регистрации: {(user[0].date_joined + timedelta(hours=3)).strftime("%d.%m.%Y %H:%M:%S")}", 
-        reply_markup=autokey({'Последние 5 заказов': 'ShowOrders', 'Установить номер телефона': 'setContact', 'Назад': 'start'})
+        f"📌 <b>Профиль</b>\n\n" \
+        f"👤 <b>Имя пользователя:</b> @{user[0].username}\n\n" \
+        f"📅 <b>Дата регистрации:</b> <code>{(user[0].date_joined + timedelta(hours=3)).strftime("%d.%m.%Y")}</code>\n\n" \
+        f"📞 <b>Телефон:</b> <code>+{user[0].contact}</code>\n\n",
+        reply_markup=autokey({'Мои заказы': 'orders_page_1', 'Установить номер телефона': 'setContact', 'Назад': 'start'})
     )
 
-@router.callback_query(F.data == "ShowOrders")
+
+def get_pagination_keyboard(page: int, total_pages: int):
+    builder = InlineKeyboardBuilder()
+
+    buttons = []
+    if page > 1:
+        buttons.append(InlineKeyboardButton(
+            text="⏪", callback_data=f"orders_page_{page-1}"
+        ))
+    buttons.append(InlineKeyboardButton(text=f"{page}/{total_pages}", callback_data="none"))
+    if page < total_pages:
+        buttons.append(InlineKeyboardButton(text="⏩", callback_data=f"orders_page_{page+1}"))
+    builder.row(*buttons)
+
+    builder.row(InlineKeyboardButton(text="Профиль", callback_data="Profile"))
+    builder.row(InlineKeyboardButton(text="Меню", callback_data="start"))
+
+    return builder.as_markup()
+
+@router.callback_query(F.data.startswith('orders_page_'))
 async def orders(call: types.CallbackQuery):
     user = await DjangoRepo.filter(User, telegram_id=call.message.chat.id)
-    text = await DjangoRepo.call_model_method(user[0], "get_5_orders")
+    orders = await DjangoRepo.call_model_method(user[0], "get_orders")
+
+    page = int(call.data.split("_")[2])
+    ITEMS_PER_PAGE = 3
+
+    total_pages = (len(orders) - 1) // ITEMS_PER_PAGE + 1
+    start_idx = (page - 1) * ITEMS_PER_PAGE
+    end_idx = start_idx + ITEMS_PER_PAGE
+
+    keyboard = get_pagination_keyboard(page, total_pages)
     await call.message.edit_text(
-        text, reply_markup=autokey({'Назад': 'Profile', 'Меню': 'start'})
+        "<b>📃 Ваши заказы:</b>\n\n" + "\n<i>━━━━━━━━━━━━━━━━━━━━━━</i>\n\n".join(orders[start_idx:end_idx]), 
+        reply_markup=keyboard
     )
+
 
 @router.callback_query(F.data == "setContact")
 async def setContact(call: types.CallbackQuery, state: FSMContext):
