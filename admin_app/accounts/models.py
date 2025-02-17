@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.hashers import make_password
 
 class User(AbstractUser):
     telegram_id = models.CharField('Telegram ID',max_length=12)
@@ -15,10 +16,15 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
     
-    def get_orders(self):
-        from datetime import timedelta  # Импорт тут, чтобы избежать циклических импортов
+    def save(self, *args, **kwargs):
+        if self.password and len(self.password) < 128:
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
+    
+    def get_orders(self, ):
+        from datetime import timedelta
 
-        orders = self.orders.select_related("currency").order_by("-created_at")
+        orders = self.orders.select_related("currency").order_by("-created_at").all()[:10]
 
         if not orders:
             return None
@@ -29,12 +35,13 @@ class User(AbstractUser):
             orders_text.append(
                 f"<b>Заказ №<code>{order.order_id}</code></b>\n"
                 f"<b>📝 Дата заказа:</b> {order.created_at + timedelta(hours=3):%d.%m.%Y %H:%M}\n"
-                f"<b>📝 Статус:</b> {order.status}\n"
-                f"<b>📦 Тип заказа:</b> {order.type}\n"
-                f"<b>💰 Сумма:</b> { round(order.amount, 0) } {order.currency.user_currency}\n"
-                f"<b>🔄 Получено:</b> { round(order.amount_output, 0) } {order.currency.exchange_currency}\n"
-                f"<b>📊 Курс обмена:</b> {order.exchange_rate}\n"
-                f"<b>🎟️ Промокод:</b> {order.promocode_usages.first().promocode.code if order.promocode_usages.exists() else 'Нет'}\n"
+                f"<b>🏷️ Статус:</b> {order.get_status_display()}\n"
+                f"<b>📦 Тип заказа:</b> {order.get_type_display()}\n"
+                f"{f'<b>🛠️ Тариф:</b> {order.tariff.name}\n' if order.tariff else ''}"
+                f"<b>💰 Сумма:</b> {round(order.amount, 0)} {order.currency.user_currency if order.currency else ""}\n" \
+                f"{f'<b>🔄 Получено:</b> {round(order.amount_output, 0)} {order.currency.exchange_currency}\n' if order.amount_output else ''}"
+                f"{f'<b>📊 Курс обмена:</b> {order.exchange_course} { f"<s>{order.exchange_course + order.promocode.discount}</s>" if order.promocode else ""}\n' if order.exchange_course else ''}"
+                f"<b>🎟️ Промокод:</b> {order.promocode.code if order.promocode else 'Нет'}\n"
             )
         return orders_text
         

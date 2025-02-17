@@ -1,5 +1,7 @@
 from pathlib import Path
 import os
+from import_export.formats.base_formats import CSV, XLSX
+EXPORT_FORMATS = [XLSX, CSV]
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -12,6 +14,9 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'django_jsonform',
+    'rangefilter',
+    'django_admin_logs',
     "import_export",
     'column_toggle',
     "admin_interface",
@@ -71,3 +76,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "static"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+DJANGO_ADMIN_LOGS_DELETABLE = True
+
+IMPORT_EXPORT_EXPORT_PERMISSION_CODE = 'can_export_data'
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000

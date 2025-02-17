@@ -49,6 +49,11 @@ def get_pagination_keyboard(page: int, total_pages: int):
 async def orders(call: types.CallbackQuery):
     user = await DjangoRepo.filter(User, telegram_id=call.message.chat.id)
     orders = await DjangoRepo.call_model_method(user[0], "get_orders")
+    if not orders:
+        await call.message.edit_text(
+            "У вас пока нет заказов, но надеюсь они скоро появятся ♡", 
+            reply_markup=autokey({'Назад': 'Profile'})
+        )
 
     page = int(call.data.split("_")[2])
     ITEMS_PER_PAGE = 3

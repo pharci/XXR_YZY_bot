@@ -1,5 +1,6 @@
 from aiogram import Router, types
 from aiogram.filters import Filter
+from .utils import createOrder, checkPromocode
 from app.bot.keyboards import *
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
@@ -7,13 +8,14 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from app.bot.keyboards.keyboards import autokey
 from decimal import Decimal
-from admin_app.orders.models import Conversion, OrderType, Order, OrderStatus, Promocode, PromocodeUsage, Graduation
+from admin_app.orders.models import Conversion, Promocode, OrderTypeEnum
 from admin_app.accounts.models import User
 from asgiref.sync import sync_to_async
 import time
 import random
 from app.repository import DjangoRepo
 import re
+import json
 
 router = Router()
 
@@ -84,7 +86,7 @@ async def currency_input(call: types.CallbackQuery, state: FSMContext):
 
     await call.message.edit_text(
         f"<b>Зависимость курса от количества:</b>\n" \
-        f"{await graduation_text(conversion)}\n\n" \
+        f"{await grade_text(conversion)}\n\n" \
         f"Введите сумму в {call.data}:",
         reply_markup=autokey({'Отмена': 'start'})
         )
@@ -97,11 +99,11 @@ async def currency_input(call: types.CallbackQuery, state: FSMContext):
 async def receiving_amount(message: types.Message, state: FSMContext): 
     order_data = await state.get_data()
     conversion = (await DjangoRepo.filter(Conversion, id=order_data["conversion_id"]))[0]
-    graduations = await DjangoRepo.filter(Graduation, conversions__id=conversion.id)
+    graduations = conversion.grades
 
-    minimum = min(graduations, key=lambda g: g.amount).amount #ЮАНИ exchange_currency
-    minimum_second = round(minimum * conversion.course, 2) #РУБЛИ input_currency
-    amount = message.text.strip() #СУММА В ЮАНЯХ ИЛИ РУБЛЯХ
+    minimum = int(min(graduations, key=graduations.get))
+    minimum_second = round(minimum * conversion.course, 2)
+    amount = message.text.strip()
 
     if re.fullmatch(r"-?\d+([.,]\d+)?", amount):
         amount = round(Decimal(amount.replace(",", ".")), 2)
@@ -127,35 +129,33 @@ async def receiving_amount(message: types.Message, state: FSMContext):
         await message.answer(f"Неккоректный ввод. ", reply_markup=autokey({'Отмена': 'start'}))
 
 
-async def graduation_text(conversion):
-    graduations = await DjangoRepo.filter(Graduation, conversions__id=conversion.id)
-    graduation_text = []
-
-    for graduation in graduations:
-        adjustment_course = conversion.course - graduation.adjustment
-        graduation_text.append(f"<b>От {graduation.amount} {conversion.exchange_currency}  — </b> {adjustment_course}")
-    
-    return "\n".join(graduation_text)
+async def grade_text(conversion):
+    grade_text = []
+    for key, value in conversion.grades.items():
+        adjustment_course = round(conversion.course - Decimal(value), 2)
+        grade_text.append(f"<b>От {key} {conversion.exchange_currency}  — </b> {adjustment_course}")
+    return "\n".join(grade_text)
 
 
 async def calculate(input_currency, conversion, amount, discount=0):
-    graduations = await DjangoRepo.filter(Graduation, conversions__id=conversion.id)
     matching_graduation = None
+    grades = conversion.grades
     
-    for graduation in graduations:
-        adjustment_course = conversion.course - graduation.adjustment
+    for key, value in grades.items():
+        adjustment_course = round(conversion.course - Decimal(value), 2)
 
         if input_currency != conversion.user_currency:
-            if graduation.amount <= amount:
-                matching_graduation = graduation
+            if Decimal(key) <= amount:
+                matching_graduation = key
         else:
-            if graduation.amount <= round(amount / adjustment_course, 2):
-                matching_graduation = graduation
+            if Decimal(key) <= round(amount / adjustment_course, 2):
+                matching_graduation = key
     
     if not matching_graduation:
         return None, None, None, ""
     
-    final_course = conversion.course - matching_graduation.adjustment - discount
+    final_course = round(conversion.course - Decimal(grades[f"{matching_graduation}"]) - discount, 2)
+    clean_course = conversion.clean_course
     
     if input_currency != conversion.user_currency:
         input_value = round(amount * final_course, 2)
@@ -163,102 +163,79 @@ async def calculate(input_currency, conversion, amount, discount=0):
     else:
         input_value = amount
         output_value = round(amount / final_course, 2)
+
+    print(input_value, output_value, final_course, clean_course)
     
-    return input_value, output_value, final_course
+    return input_value, output_value, final_course, clean_course
 
 #Предпросмотр заказа
 @router.callback_query(F.data == "OrderPreview", OrderState.OrderPreview)
+@router.callback_query(F.data == "OrderPreview", OrderState.InputPromocode)
 async def currency_choice(call: types.CallbackQuery, state: FSMContext):
     
     order_data = await state.get_data()
     conversion = (await DjangoRepo.filter(Conversion, id=order_data["conversion_id"]))[0]
     
-    promocode = order_data.get('promocode', None)
+    code = order_data.get('code', None)
     discount = 0
-    if promocode:
-        discount = (await DjangoRepo.filter(Promocode, code=promocode))[0].discount
+    if code:
+        discount = (await DjangoRepo.filter(Promocode, code=code))[0].discount
 
-    input, output, course = await calculate(order_data['input_currency'], conversion, order_data["amount"], discount)
+    input, output, course, clean_course = await calculate(order_data['input_currency'], conversion, order_data["amount"], discount)
 
     await state.update_data(amount_input=input)
     await state.update_data(amount_output=output)
     await state.update_data(course=course)
-    await state.update_data(user_currency=conversion.user_currency)
-    await state.update_data(exchange_currency=conversion.exchange_currency)
+    await state.update_data(clean_course=clean_course)
 
     text = f"<b>Предварительный просмотр:</b> \n\n" \
            f"<b>Тип заказа:</b> Обмен \n" \
            f"<b>Вы отдаете:</b> { round(input, 0) } {conversion.user_currency}\n" \
            f"<b>Вы получаете:</b> { round(output, 0) } {conversion.exchange_currency}\n" \
-           f"<b>По курсу:</b> {course} { f"<s>{course + discount}</s>" if promocode else ""}\n" \
-           f"<b>Промокод:</b> {f"{promocode} (-{discount})" if promocode else "Нет"} \n\n\n" \
+           f"<b>По курсу:</b> {course} { f"<s>{course + discount}</s>" if code else ""}\n" \
+           f"<b>Промокод:</b> {f"{code} (-{discount})" if code else "Нет"} \n\n\n" \
            f"<b>Зависимость курса от количества:</b>\n" \
-           f"{await graduation_text(conversion)}"
+           f"{await grade_text(conversion)}"
     
-    await call.message.edit_text(text, reply_markup=autokey({'Ввести промокод': 'promocode', 'Оформить заказ': 'CreateOrder', 'Отмена': 'start'}))
+    await call.message.edit_text(text, reply_markup=autokey({'Ввести промокод': 'code', 'Оформить заказ': 'CreateOrder', 'Отмена': 'start'}))
     await state.set_state(OrderState.CreateOrder)
 
 
 #Просим ввести промокод
-@router.callback_query(F.data == "promocode")
+@router.callback_query(F.data == "code")
 async def currency_choice(call: types.CallbackQuery, state: FSMContext):
-    await call.message.edit_text("Введите промокод:")
+    await call.message.edit_text("Введите промокод:", reply_markup=autokey({'Назад': 'OrderPreview'}))
     await state.set_state(OrderState.InputPromocode)
 
 #Принимаем промокод
 @router.message(OrderState.InputPromocode)
 async def receiving_amount(message: types.Message, state: FSMContext): 
-    try:
-        promocode = await sync_to_async(Promocode.objects.get)(code=message.text)
-        await state.update_data(promocode=message.text)
-        await message.answer(f"Промокод {promocode} успешно применен!", reply_markup=autokey({'Продолжить': 'OrderPreview', 'Отмена': 'start'}))
-        await state.set_state(OrderState.OrderPreview)
-    except:
-        await message.answer(f"Промокод не существует, либо вы не можете его применить.", reply_markup=autokey({'Вернуться': 'OrderPreview'}))
-        await state.set_state(OrderState.OrderPreview)
+    order_data = await state.get_data()
+
+    user = (await DjangoRepo.filter(User, telegram_id=message.chat.id))[0]
+    code = message.text
+    order_type = OrderTypeEnum.EXCHANGE.value[0]
+
+    response = await checkPromocode(
+        message=message, 
+        user=user, 
+        order_type=order_type, 
+        conversion_id=order_data["conversion_id"]
+    )
+
+    if response:
+        await state.update_data(code=code)
+
+    await state.set_state(OrderState.OrderPreview)
+
 
 #Создаем заказ
 @router.callback_query(F.data == "CreateOrder", OrderState.CreateOrder)
 async def currency_choice(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(type=OrderTypeEnum.EXCHANGE.value[0])
+
     order_data = await state.get_data()
 
-    order_id = int(f"{int(time.time())}{random.randint(10, 99)}")
-    amount_input = order_data['amount_input']
-    amount_output = order_data['amount_output']
-    course = order_data['course']
-    user_currency = order_data['user_currency']
-    exchange_currency = order_data['exchange_currency']
-    conversion_id = order_data['conversion_id']
-    promocode = order_data.get('promocode', None)
+    await createOrder(call, order_data)
 
-    user = (await DjangoRepo.filter(User, telegram_id=call.message.chat.id))[0]
-    order = await DjangoRepo.create(Order, {
-        'user': user,
-        'contact': user.contact,
-        'order_id': order_id,
-        'status': (await DjangoRepo.filter(OrderStatus, name="Создан"))[0],
-        'type': (await DjangoRepo.filter(OrderType, name="Обмен"))[0],
-        'currency': (await DjangoRepo.filter(Conversion, id=conversion_id))[0],
-        'amount': amount_input,
-        'amount_output': amount_output,
-        'exchange_rate': course,
-    })
-
-    if promocode:
-        promocode_usage = await DjangoRepo.create(PromocodeUsage, {
-            'promocode': (await DjangoRepo.filter(Promocode, code=promocode))[0],
-            'user': user,
-            'order': order,
-        })
-
-    await call.message.edit_text(
-        f"<b>Заказ №<code>{order_id}</code></b>\n" \
-        f"<b>📝 Статус:</b> Создан\n" \
-        f"<b>📦 Тип заказа:</b> Обмен\n" \
-        f"<b>💰 Сумма:</b> { round(amount_input, 0) } {user_currency}\n" \
-        f"<b>🔄 К получению:</b> { round(amount_output, 0) } {exchange_currency}\n" \
-        f"<b>📊 Курс обмена:</b> {course}\n" \
-        f"<b>🎟️ Промокод:</b> {promocode if promocode else "Нет"}\n"
-    )
-    await call.message.answer("Спасибо за заказ!", reply_markup=autokey({'Профиль': 'Profile', 'Меню': 'start'}))
     await state.clear()
