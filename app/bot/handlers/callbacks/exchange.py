@@ -11,11 +11,8 @@ from decimal import Decimal
 from admin_app.orders.models import Conversion, Promocode, OrderTypeEnum
 from admin_app.accounts.models import User
 from asgiref.sync import sync_to_async
-import time
-import random
 from app.repository import DjangoRepo
 import re
-import json
 
 router = Router()
 
@@ -202,7 +199,7 @@ async def currency_choice(call: types.CallbackQuery, state: FSMContext):
 
 
 #Просим ввести промокод
-@router.callback_query(F.data == "code")
+@router.callback_query(F.data == "code", OrderState.CreateOrder)
 async def currency_choice(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text("Введите промокод:", reply_markup=autokey({'Назад': 'OrderPreview'}))
     await state.set_state(OrderState.InputPromocode)

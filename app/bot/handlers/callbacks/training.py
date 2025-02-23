@@ -24,6 +24,13 @@ class TrainingState(StatesGroup):
 
 @router.callback_query(F.data == "Training")
 async def start(call: types.CallbackQuery, state: FSMContext):
+    user = await DjangoRepo.filter(User, telegram_id=call.message.chat.id)
+    if not user[0].contact:
+        return await call.message.edit_text(
+            "Чтобы создать заказ, установите номер телефона в профиле.", 
+            reply_markup=autokey({'Профиль': 'Profile', 'Отмена': 'start'})
+        )
+
     text = (await DjangoRepo.filter(Bot, message_id=2))[0].text
 
     categories = await DjangoRepo.filter(Category, is_active=True)
@@ -103,7 +110,7 @@ async def currency_choice(call: types.CallbackQuery, state: FSMContext):
 
 
 #Просим ввести промокод
-@router.callback_query(F.data == "code")
+@router.callback_query(F.data == "code", TrainingState.CreateOrder)
 async def currency_choice(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text("Введите промокод:", reply_markup=autokey({'Назад': 'OrderPreview'}))
     await state.set_state(TrainingState.InputPromocode)

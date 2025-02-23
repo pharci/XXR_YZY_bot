@@ -14,12 +14,12 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    "admin_interface",
     'django_jsonform',
     'rangefilter',
     'django_admin_logs',
     "import_export",
     'column_toggle',
-    "admin_interface",
     "colorfield",
     "nested_admin",
     'django.contrib.admin',
@@ -49,12 +49,19 @@ ROOT_URLCONF = 'admin_app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'APP_DIRS': True,
+        'DIRS': [],
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+            ],
+            'loaders':[
+                'admin_tools.template_loaders.Loader',
+                ('django.template.loaders.cached.Loader', [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+                ]),
             ],
         },
     },

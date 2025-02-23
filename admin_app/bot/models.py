@@ -44,4 +44,4 @@ class Tariff(models.Model):
         verbose_name_plural = "Тарифы обучения"
 
     def __str__(self):
-        return self.name
+        return f"{self.category} | {self.name}"
