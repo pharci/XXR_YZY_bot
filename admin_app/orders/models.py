@@ -135,10 +135,12 @@ class Order(models.Model):
                 f"<b>🏷️ Статус:</b> {self.get_status_display()}\n" \
                 f"<b>📋 Тип заказа:</b> {self.get_type_display()}\n\n" \
                 f"{f'<b>🛠️ Тариф:</b> {self.tariff.name}\n\n' if self.tariff else ''}" \
+                f"<b>👤 Пользователь:</b> @{self.user.username}\n" \
+                f"<b>📞 Телефон:</b> {self.user.contact if self.user.contact else 'Отсутствует'}\n\n" \
                 f"{f'<b>🔄 К получению:</b> {round(self.amount_output, 0)} {self.currency.exchange_currency}\n' if self.amount_output else ''}" \
                 f"{f'<b>📊 Курс обмена:</b> {self.exchange_course} {f"<s>{self.exchange_course + self.promocode.discount}</s>" if self.promocode else ""}\n\n' if self.exchange_course else ''}" \
                 f"<b>🎟️ Промокод:</b> {f'{self.promocode.code} (-{self.promocode.discount})' if self.promocode else 'Нет'}\n" \
-                f"<b>💸 Итоговая сумма:</b> {round(self.amount, 0)} {self.currency.user_currency if self.currency else ' ₽'}\n"
+                f"<b>💸 Итоговая сумма:</b> {round(self.amount, 0)} {self.currency.user_currency if self.currency else '₽'}\n"
         
         return text 
     
@@ -157,11 +159,18 @@ class Order(models.Model):
 class Transaction(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="transactions", verbose_name="Заказ")
     transaction_id = models.BigIntegerField('Номер ордера', unique=True, db_index=True, null=True, blank=True)
+    payment_card = models.ForeignKey("PaymentCard", on_delete=models.SET_NULL, null=True, blank=True, related_name="transactions", verbose_name="Банковская карта")
     amount = models.DecimalField('Сумма', max_digits=10, decimal_places=2)
     exchange_course = models.DecimalField('Курс', max_digits=10, decimal_places=2, null=True, blank=True)
     amount_usdt = models.DecimalField('USDT', max_digits=10, decimal_places=2, null=True, blank=True)
     transaction_date = models.DateTimeField('Дата транзакции', auto_now_add=True)
-    payment_card = models.ForeignKey("PaymentCard", on_delete=models.SET_NULL, null=True, blank=True, related_name="transactions", verbose_name="Банковская карта")
+
+    def save(self, *args, **kwargs):
+        if self.amount is not None and self.exchange_course is not None and self.exchange_course:
+            self.amount_usdt = round((self.amount / self.exchange_course), 2)
+        else:
+            self.amount_usdt = Decimal(0)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Транзакция на сумму {self.amount}"
@@ -171,11 +180,12 @@ class Transaction(models.Model):
         verbose_name_plural = "Транзакции"
 
 class PaymentCard(models.Model):
-    card_number = models.CharField('Номер карты', max_length=20, unique=True)
+    name = models.CharField('Название карты', max_length=50)
+    card_number = models.CharField('Номер карты', max_length=30, unique=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     
     def __str__(self):
-        return f"{self.card_number}"
+        return f"{self.name}"
 
     class Meta:
         verbose_name = "Банковская карта"

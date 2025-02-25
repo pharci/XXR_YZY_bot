@@ -16,9 +16,16 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import localtime
 from django.utils.safestring import mark_safe
 from django.urls import reverse
-from django.db.models import Sum, Avg
+from django.db.models import Sum, Avg, Q
 
-class PromocodeInline(nested_admin.NestedTabularInline):
+
+class UserAutocomplete(admin.ModelAdmin):
+    search_fields = ['name', 'contact']
+
+    def get_search_results(self, request, queryset, search_term):
+        return queryset.filter(Q(name__icontains=search_term) | Q(contact__icontains=search_term))
+
+class PromocodeInline(nested_admin.NestedStackedInline):
     model = Promocode
     extra = 1
 
@@ -28,6 +35,7 @@ class PromocodeAdmin(ColumnToggleModelAdmin):
     default_selected_columns = ['code', 'user', 'order_type', 'conversion', 'discount', 'activations', 'created_at']
     search_fields = ('code', 'user__username', 'order_type__name')
     list_filter = ('start_at', 'end_at')
+    autocomplete_fields = ['user']
 
 @admin.register(Conversion)
 class ConversionAdmin(ColumnToggleModelAdmin):
@@ -42,9 +50,15 @@ class PaymentCardAdmin(ColumnToggleModelAdmin):
     default_selected_columns = ['card_number', 'created_at']
     search_fields = ('card_number', )
 
+
+
+
+
+
 class TransactionInline(nested_admin.NestedTabularInline):
     model = Transaction
     extra = 0
+    readonly_fields = ('amount_usdt', )
 
 class CustomConversionWidget(ForeignKeyWidget):
     def render(self, value, obj=None, **kwargs):
@@ -103,11 +117,6 @@ class OrderResource(ModelResource):
         return round(total_usdt, 2) if total_usdt else "-"
 
 
-
-from django.contrib import admin
-from django.contrib.admin import SimpleListFilter
-from django.db.models import Q
-from django import forms
 
 class AdminAutocomplete(admin.ModelAdmin):
     search_fields = ['name', 'contact']

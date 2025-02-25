@@ -161,8 +161,6 @@ async def calculate(input_currency, conversion, amount, discount=0):
         input_value = amount
         output_value = round(amount / final_course, 2)
 
-    print(input_value, output_value, final_course, clean_course)
-    
     return input_value, output_value, final_course, clean_course
 
 #Предпросмотр заказа

@@ -60,6 +60,11 @@ async def createOrder(call, data):
     for admin in admins:
         await send_telegram_message(user_id=admin.telegram_id, text=text, url=f"{settings.WEBHOOK_URL}/admin{url}")
 
+    if settings.GROUP_ID:
+        await send_telegram_message(settings.GROUP_ID, text=text, url=f"{settings.WEBHOOK_URL}/admin{url}")
+
+        
+
 
 async def checkPromocode(message, user, order_type, tariff_id = None, conversion_id = None):
     try:

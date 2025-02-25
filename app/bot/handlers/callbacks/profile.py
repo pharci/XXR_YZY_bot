@@ -22,7 +22,7 @@ async def profile(call: types.CallbackQuery):
         f"📌 <b>Профиль</b>\n\n" \
         f"👤 <b>Имя пользователя:</b> @{user[0].username}\n\n" \
         f"📅 <b>Дата регистрации:</b> <code>{(user[0].date_joined + timedelta(hours=3)).strftime("%d.%m.%Y")}</code>\n\n" \
-        f"📞 <b>Телефон:</b> <code>+{user[0].contact}</code>\n\n",
+        f"📞 <b>Телефон:</b> {user[0].contact}\n\n",
         reply_markup=autokey({'Мои заказы': 'orders_page_1', 'Установить номер телефона': 'setContact', 'Назад': 'start'})
     )
 
@@ -81,7 +81,12 @@ async def setContact(call: types.CallbackQuery, state: FSMContext):
 @router.message(F.contact.is_not(None), ContactState.setContact)
 async def inputContact(message: types.Message, state: FSMContext): 
     user = await DjangoRepo.filter(User, telegram_id=message.chat.id)
-    await DjangoRepo.update(User, user[0].id, {"contact": message.contact.phone_number})
+
+    contact = message.contact.phone_number
+    if not contact.startswith("+"):
+        contact = "+" + contact
+
+    await DjangoRepo.update(User, user[0].id, {"contact": contact})
 
     sent_message = await message.answer("loading...", reply_markup=ReplyKeyboardRemove())
     await sent_message.delete()

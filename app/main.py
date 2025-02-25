@@ -14,7 +14,7 @@ application = get_asgi_application()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await bot.set_webhook(f"{settings.WEBHOOK_URL}/webhook")
+    await bot.set_webhook(f"{settings.WEBHOOK_URL}/{settings.TELEGRAM_TOKEN}/webhook")
     yield
 
 app = FastAPI(lifespan=lifespan)

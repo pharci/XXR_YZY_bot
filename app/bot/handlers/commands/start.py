@@ -24,7 +24,6 @@ async def start(message: types.Message, state: FSMContext):
         })
 
     message_bot = await DjangoRepo.filter(Bot, message_id=1)
-
     await state.clear()
     await message.answer(
         message_bot[0].text if message_bot else "Меню",
@@ -35,7 +34,6 @@ async def start(message: types.Message, state: FSMContext):
                               'Профиль': 'Profile', 
                               'Помощь': 'help'})
     )
-
 
 @router.callback_query(F.data == "start")
 async def start(call: types.CallbackQuery, state: FSMContext):
