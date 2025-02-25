@@ -11,7 +11,11 @@ X_FRAME_OPTIONS = "SAMEORIGIN"
 SILENCED_SYSTEM_CHECKS = ["security.W019"]
 
 DEBUG = True
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', 'https://a08hub.ru']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://a08hub.ru',
+]
 
 INSTALLED_APPS = [
     "admin_interface",
@@ -81,8 +85,6 @@ LANGUAGE_CODE = 'ru'
 TIME_ZONE = 'Europe/Moscow'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "static"
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DJANGO_ADMIN_LOGS_DELETABLE = True
 

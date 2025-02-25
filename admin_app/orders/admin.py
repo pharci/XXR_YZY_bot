@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Order, Promocode, Conversion, Transaction, PaymentCard
+from .models import Order, Promocode, Conversion, TransactionReceiving, TransactionSending, PaymentCard, PromocodeUsage, AlipayAccounts
 import nested_admin
 from django.utils.html import format_html
 from column_toggle.admin import ColumnToggleModelAdmin
@@ -17,6 +17,13 @@ from django.utils.timezone import localtime
 from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.db.models import Sum, Avg, Q
+
+@admin.register(PromocodeUsage)
+class UserActivityAdmin(ColumnToggleModelAdmin):
+    list_display = ("user", "order", "promocode", "created_at")
+    default_selected_columns = ["user", "order", "promocode", "created_at"]
+    readonly_fields = ("user", "order", "promocode", "created_at") 
+    search_fields = ("user", "order", "promocode")
 
 
 class UserAutocomplete(admin.ModelAdmin):
@@ -44,21 +51,79 @@ class ConversionAdmin(ColumnToggleModelAdmin):
     search_fields = ('user_currency', 'exchange_currency')
     list_filter = ('user_currency', 'exchange_currency', 'updated_at')
 
+@admin.register(AlipayAccounts)
+class AlipayAccountsAdmin(ColumnToggleModelAdmin):
+    list_display = ('name', 'account_id', 'created_at')
+    default_selected_columns = ['name', 'account_id', 'created_at']
+    search_fields = ('name', 'account_id', )
+
 @admin.register(PaymentCard)
 class PaymentCardAdmin(ColumnToggleModelAdmin):
-    list_display = ('card_number', 'created_at')
-    default_selected_columns = ['card_number', 'created_at']
-    search_fields = ('card_number', )
+    list_display = ('name', 'card_number', 'created_at')
+    default_selected_columns = ['name', 'card_number', 'created_at']
+    search_fields = ('name', 'card_number', )
 
 
-
-
-
-
-class TransactionInline(nested_admin.NestedTabularInline):
-    model = Transaction
+class TransactionReceivingInline(nested_admin.NestedTabularInline):
+    model = TransactionReceiving
     extra = 0
-    readonly_fields = ('amount_usdt', )
+    readonly_fields = ('amount_usdt', "transaction_date")
+
+    def get_formset(self, request, obj=None, **kwargs):
+            formset = super().get_formset(request, obj, **kwargs)
+            if obj: 
+                formset.form.base_fields['amount'].label = f"СУММА В {obj.currency.user_currency}"
+            return formset
+
+class TransactionSendingInline(nested_admin.NestedTabularInline):
+    model = TransactionSending
+    extra = 0
+    fields = ("alipay_id_display", "alipay_account", "amount", "exchange_course", 'amount_usdt', "transaction_date")
+    readonly_fields = ('alipay_id_display', 'amount_usdt', "transaction_date")
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        
+        if obj: 
+            formset.form.base_fields['amount'].label = f"СУММА В {obj.currency.exchange_currency}"
+        return formset
+    
+    def alipay_id_display(self, obj):
+        html_content = format_html(
+            '''
+            <a href="#" onclick="copyToClipboard('{}'); return false;" 
+            style="background-color: #4CAF50; color: white; padding: 5px 10px; text-align: center; text-decoration: none; display: inline-block; font-size: 14px; cursor: pointer; border-radius: 8px; transition: background-color 0.3s;">
+            {}
+            </a> 
+            <div id="copyMessage" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #4CAF50; color: white; padding: 10px 20px; border-radius: 5px; display: none; font-size: 14px;">
+                Номер скопирован в буфер обмена!
+            </div>
+            <script type="text/javascript">
+                function copyToClipboard(text) {{
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    
+                    // Показываем сообщение
+                    var message = document.getElementById('copyMessage');
+                    message.style.display = 'block';
+                    
+                    // Скрываем сообщение через 2 секунды
+                    setTimeout(function() {{
+                        message.style.display = 'none';
+                    }}, 2000);
+                }}
+            </script>
+            ''',
+            obj.alipay_account.account_id,
+            obj.alipay_account.account_id,
+        )
+        
+        return mark_safe(html_content) 
+    alipay_id_display.short_description = "Номер Alipay"
 
 class CustomConversionWidget(ForeignKeyWidget):
     def render(self, value, obj=None, **kwargs):
@@ -163,7 +228,7 @@ class OrderAdmin(nested_admin.NestedModelAdmin, ColumnToggleModelAdmin, ImportEx
                        'promocode', 'currency', 'exchange_course', 'clean_course', 
                        'input_amount', 'output_amount', 'profit_display', "admin_profit_display", "order_history",
                        "sum_of_transactions", "average_course", "sum_of_usdt") 
-    inlines = [TransactionInline]
+    inlines = [TransactionReceivingInline, TransactionSendingInline]
 
     def order_id_display(self, obj):
         html_content = format_html(
@@ -299,7 +364,7 @@ class OrderAdmin(nested_admin.NestedModelAdmin, ColumnToggleModelAdmin, ImportEx
 # транзакции
     def sum_of_transactions(self, obj=None):
         if obj:
-            total_amount = obj.transactions.aggregate(Sum('amount'))['amount__sum']
+            total_amount = obj.transactions_r.aggregate(Sum('amount'))['amount__sum']
             if total_amount:
                 return format_html(f'<span style="color: blue;">{total_amount}</span>')
         return "-"
@@ -308,7 +373,7 @@ class OrderAdmin(nested_admin.NestedModelAdmin, ColumnToggleModelAdmin, ImportEx
     def average_course(self, obj=None):
         if obj:
             # Получаем среднее значение курса всех транзакций
-            average_course = obj.transactions.aggregate(Avg('exchange_course'))['exchange_course__avg']
+            average_course = obj.transactions_r.aggregate(Avg('exchange_course'))['exchange_course__avg']
             if average_course:
                 return format_html(f'<span style="color: blue;">{round(average_course, 2)}</span>')
         return "-"
@@ -317,7 +382,7 @@ class OrderAdmin(nested_admin.NestedModelAdmin, ColumnToggleModelAdmin, ImportEx
     def sum_of_usdt(self, obj=None):
             if obj:
                 # Получаем сумму всех транзакций по USDT
-                total_usdt = obj.transactions.aggregate(Sum('amount_usdt'))['amount_usdt__sum']
+                total_usdt = obj.transactions_r.aggregate(Sum('amount_usdt'))['amount_usdt__sum']
                 if total_usdt:
                     return format_html(f'<span style="color: blue;">{round(total_usdt, 2)} USDT</span>')
             return "-"

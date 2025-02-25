@@ -2,8 +2,8 @@ from django.utils import timezone
 from app.bot.bot import bot
 from app.bot.keyboards import *
 from app.bot.keyboards.keyboards import autokey
-from admin_app.orders.models import Conversion, Order, Promocode
-from admin_app.accounts.models import User, PromocodeUsage
+from admin_app.orders.models import Conversion, Order, Promocode, PromocodeUsage
+from admin_app.accounts.models import User
 from admin_app.bot.models import Tariff
 import time
 import random

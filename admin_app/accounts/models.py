@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
-from admin_app.orders.models import Order, Promocode
+from admin_app.orders.models import Order
 from django.db.models import Sum
 import locale
 
@@ -59,16 +59,3 @@ class User(AbstractUser):
             })
         
         return months
-
-class PromocodeUsage(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="promocode_usage", verbose_name='Пользователь')
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="promocode_usage", verbose_name='Заказ')
-    promocode = models.ForeignKey(Promocode, on_delete=models.CASCADE, related_name="promocode_usage", verbose_name='Промокод')
-    created_at = models.DateTimeField("Создано", auto_now_add=True)
-
-    class Meta:
-            verbose_name = "Использование промокода"
-            verbose_name_plural = "Использования промокодов"
-
-    def __str__(self):
-        return f"{self.user} - Промо: {self.promocode.code} - Заказ: {self.order.order_id}"

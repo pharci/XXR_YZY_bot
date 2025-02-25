@@ -145,19 +145,34 @@ class Order(models.Model):
         return text 
     
     def save(self, *args, **kwargs):
-        if self.amount is not None and self.amount_output is not None and self.clean_course is not None and self.admin is not None and self.admin.percentage_of_profit is not None:
+        if self.amount is not None and self.amount_output is not None and self.clean_course is not None:
             self.profit = round((self.exchange_course - self.clean_course) * self.amount_output, 2)
-            self.admin_profit = round(self.profit * self.admin.percentage_of_profit // 100, 2)
         else:
             self.profit = self.amount if self.amount is not None else 0
+
+        if self.admin is not None and self.admin.percentage_of_profit is not None:
+            self.admin_profit = round(self.profit * self.admin.percentage_of_profit // 100, 2)
+        else:
             self.admin_profit = 0.0
         super().save(*args, **kwargs)
 
 
+class PromocodeUsage(models.Model):
+    user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="promocode_usage", verbose_name='Пользователь')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="promocode_usage", verbose_name='Заказ')
+    promocode = models.ForeignKey(Promocode, on_delete=models.CASCADE, related_name="promocode_usage", verbose_name='Промокод')
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+
+    class Meta:
+            verbose_name = "Использование промокода"
+            verbose_name_plural = "Использования промокодов"
+
+    def __str__(self):
+        return f"{self.user} - Промо: {self.promocode.code} - Заказ: {self.order.order_id}"
 
 
-class Transaction(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="transactions", verbose_name="Заказ")
+class TransactionReceiving(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="transactions_r", verbose_name="Заказ")
     transaction_id = models.BigIntegerField('Номер ордера', unique=True, db_index=True, null=True, blank=True)
     payment_card = models.ForeignKey("PaymentCard", on_delete=models.SET_NULL, null=True, blank=True, related_name="transactions", verbose_name="Банковская карта")
     amount = models.DecimalField('Сумма', max_digits=10, decimal_places=2)
@@ -176,11 +191,11 @@ class Transaction(models.Model):
         return f"Транзакция на сумму {self.amount}"
 
     class Meta:
-        verbose_name = "Транзакция"
-        verbose_name_plural = "Транзакции"
+        verbose_name = "Транзакция получения"
+        verbose_name_plural = "Транзакции получения"
 
 class PaymentCard(models.Model):
-    name = models.CharField('Название карты', max_length=50)
+    name = models.CharField('Название', max_length=100)
     card_number = models.CharField('Номер карты', max_length=30, unique=True)
     created_at = models.DateTimeField('Дата создания', auto_now_add=True)
     
@@ -190,3 +205,39 @@ class PaymentCard(models.Model):
     class Meta:
         verbose_name = "Банковская карта"
         verbose_name_plural = "Банковские карты"
+
+
+
+class TransactionSending(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="transactions_s", verbose_name="Заказ")
+    alipay_account = models.ForeignKey("AlipayAccounts", on_delete=models.SET_NULL, null=True, blank=True, related_name="transactions", verbose_name="Аккаунт Alipay")
+    amount = models.DecimalField('Сумма', max_digits=10, decimal_places=2)
+    exchange_course = models.DecimalField('Курс', max_digits=10, decimal_places=2, null=True, blank=True)
+    amount_usdt = models.DecimalField('USDT', max_digits=10, decimal_places=2, null=True, blank=True)
+    transaction_date = models.DateTimeField('Дата транзакции', auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.amount is not None and self.exchange_course is not None and self.exchange_course:
+            self.amount_usdt = round((self.amount / self.exchange_course), 2)
+        else:
+            self.amount_usdt = Decimal(0)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Транзакция на сумму {self.amount}"
+
+    class Meta:
+        verbose_name = "Транзакция отправки"
+        verbose_name_plural = "Транзакции отправки"
+    
+class AlipayAccounts(models.Model):
+    name = models.CharField('Название', max_length=100)
+    account_id = models.CharField('Номер аккаунта', max_length=30, unique=True)
+    created_at = models.DateTimeField('Дата создания', auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        verbose_name = "Аккаунт Alipay"
+        verbose_name_plural = "Аккаунты Alipay"

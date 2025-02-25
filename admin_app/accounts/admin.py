@@ -1,17 +1,9 @@
 from django.contrib import admin
 from .models import User
-from .models import PromocodeUsage
 from django.utils.html import format_html
 from admin_app.orders.admin import PromocodeInline
 from column_toggle.admin import ColumnToggleModelAdmin
 import nested_admin
-
-@admin.register(PromocodeUsage)
-class UserActivityAdmin(ColumnToggleModelAdmin):
-    list_display = ("user", "order", "promocode", "created_at")
-    default_selected_columns = ["user", "order", "promocode", "created_at"]
-    readonly_fields = ("user", "order", "promocode", "created_at") 
-    search_fields = ("user", "order", "promocode")
 
 @admin.register(User)
 class UserAdmin(nested_admin.NestedModelAdmin, ColumnToggleModelAdmin):

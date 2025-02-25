@@ -27,10 +27,4 @@ app.mount(
     name="static"
 )
 
-app.mount(
-    "/media", 
-    StaticFiles(directory=os.path.join(os.getcwd(), "admin_app", "media")), 
-    name="media"
-)
-
 app.include_router(router)
