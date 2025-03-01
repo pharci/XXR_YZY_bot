@@ -84,8 +84,8 @@ async def currency_input(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text(
         f"<b>Зависимость курса от количества:</b>\n" \
         f"{await grade_text(conversion)}\n\n" \
-        f"Введите сумму в {call.data}:",
-        reply_markup=autokey({'Перейти к обучению': 'go_to_training', 'Отмена': 'start'})
+        f"Отправьте в чат сумму в {call.data}:",
+        reply_markup=autokey({'Перейти к обучению': 'go_to_training', 'Отменить заказ': 'start'})
         )
 
     await state.set_state(OrderState.receiving)
@@ -113,17 +113,17 @@ async def receiving_amount(message: types.Message, state: FSMContext):
             await state.update_data(amount=amount)
             await message.answer(
                 f"Вы ввели {amount}{order_data["input_currency"]}", 
-                reply_markup=autokey({'Продолжить': 'OrderPreview', 'Отмена': 'start'})
+                reply_markup=autokey({'Продолжить': 'OrderPreview', 'Отменить заказ': 'start'})
                 )
             await state.set_state(OrderState.OrderPreview)
         else:
             await message.answer(
                 f"Минимум: {minimum}{conversion.exchange_currency} | {minimum_second}{conversion.user_currency}\n"
                 f"Максимум: {100000}{conversion.exchange_currency} | {round(100000 * conversion.course, 2)}{conversion.user_currency}",  
-                reply_markup=autokey({'Отмена': 'start'})
+                reply_markup=autokey({'Отменить заказ': 'start'})
             )
     else:
-        await message.answer(f"Неккоректный ввод. ", reply_markup=autokey({'Отмена': 'start'}))
+        await message.answer(f"Неккоректный ввод. ", reply_markup=autokey({'Отменить заказ': 'start'}))
 
 
 async def grade_text(conversion):
@@ -193,7 +193,7 @@ async def currency_choice(call: types.CallbackQuery, state: FSMContext):
            f"<b>Зависимость курса от количества:</b>\n" \
            f"{await grade_text(conversion)}"
     
-    await call.message.edit_text(text, reply_markup=autokey({'Ввести промокод': 'code', 'Оформить заказ': 'CreateOrder', 'Отмена': 'start'}))
+    await call.message.edit_text(text, reply_markup=autokey({'Ввести промокод': 'code', 'Оформить заказ': 'CreateOrder', 'Отменить заказ': 'start'}))
     await state.set_state(OrderState.CreateOrder)
 
 
