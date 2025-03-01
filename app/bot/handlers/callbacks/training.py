@@ -38,6 +38,7 @@ async def start(call: types.CallbackQuery, state: FSMContext):
     text = (await DjangoRepo.filter(Bot, message_id=2))[0].text
 
     categories = await DjangoRepo.filter(Category, is_active=True)
+    categories.sort(key=lambda x: x.order, reverse=True)
 
     builder = InlineKeyboardBuilder()
     for i in categories:
@@ -57,9 +58,11 @@ async def start(call: types.CallbackQuery, state: FSMContext):
     category = (await DjangoRepo.filter(Category, id=category_id))[0]
     await state.update_data(category_id=category_id)
 
-    buttons = await DjangoRepo.filter(Tariff, category__id=category_id, is_active=True)
+    tariffs = await DjangoRepo.filter(Tariff, category__id=category_id, is_active=True)
+    tariffs.sort(key=lambda x: x.order, reverse=True)
+
     builder = InlineKeyboardBuilder()
-    for i in buttons:
+    for i in tariffs:
         builder.button(
             text=f"{i.name} - {i.amount} ₽", callback_data=f"{i.id}"
         )

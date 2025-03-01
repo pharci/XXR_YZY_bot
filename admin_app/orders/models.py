@@ -16,10 +16,19 @@ class OrderTypeEnum(Enum):
         return [(item.value[0], item.value[1]) for item in cls]
 
 class Conversion(models.Model):
+    ITEMS_SCHEMA_INDEPENDENT = {
+        'type': 'dict',
+        'properties': {
+            'min': {'type': 'number', 'default': 0},
+            'max': {'type': 'number', 'default': 0}
+        },
+        'required': ['min', 'max'],
+        'additionalProperties': False
+    }
+
     ITEMS_SCHEMA = {
         'type': 'dict',
-        'keys': {
-        },
+        'keys': {},
         'additionalProperties': { 'type': 'number' }
     }
 
@@ -27,6 +36,7 @@ class Conversion(models.Model):
     exchange_currency = models.CharField("Валюта получения", max_length=10)
     course = models.DecimalField("Курс", max_digits=10, decimal_places=2)
     clean_course = models.DecimalField("Чистый курс", max_digits=10, decimal_places=2)
+    independent_grades = JSONField("Градация самостоятельного обмена", schema=ITEMS_SCHEMA_INDEPENDENT)
     grades = JSONField("Градация", schema=ITEMS_SCHEMA)
     enabled = models.BooleanField('Отображать в списке',default=True)
     created_at = models.DateTimeField("Создано", auto_now_add=True)

@@ -131,7 +131,9 @@ async def grade_text(conversion):
     for key, value in conversion.grades.items():
         adjustment_course = round(conversion.course - Decimal(value), 2)
         grade_text.append(f"<b>От {key} {conversion.exchange_currency}  — </b> {adjustment_course}")
-    grade_text.append(f"\n<i>Если пройти обучение, вы сможете обменивать самостоятельно по курсу <b>{conversion.clean_course}</b></i>.")
+    grade_text.append(f"\n<i>Пройдите обучение, для самостоятельного обмена по курсу: " \
+                      f"<b>{round(conversion.course - Decimal(conversion.independent_grades['min']), 2)} - " \
+                      f"{round(conversion.course - Decimal(conversion.independent_grades['max']), 2)}</b></i>.")
     return "\n".join(grade_text)
 
 

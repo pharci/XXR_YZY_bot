@@ -19,6 +19,7 @@ class Bot(models.Model):
 class Category(models.Model):
     name = models.CharField('Имя категории', max_length=100)
     text = models.TextField('Текст сообщения', max_length=2048)
+    order = models.PositiveIntegerField('Порядок', default=0)
     is_active = models.BooleanField('Обучение активно', default=False)
     created_at = models.DateTimeField("Создано", auto_now_add=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
@@ -34,6 +35,7 @@ class Tariff(models.Model):
     category = models.ForeignKey(Category, blank=True, null=True, on_delete=models.SET_NULL, related_name="tariff", verbose_name="Категория")
     name = models.CharField('Текст на кнопке', max_length=100)
     text = models.TextField('Текст сообщения', max_length=2048)
+    order = models.PositiveIntegerField('Порядок', default=0)
     amount = models.DecimalField('Цена', max_digits=10, decimal_places=2)
     is_active = models.BooleanField('Обучение активно', default=False)
     created_at = models.DateTimeField("Создано", auto_now_add=True)

@@ -9,10 +9,10 @@ class BotAdmin(ColumnToggleModelAdmin):
 
 @admin.register(Tariff)
 class TariffAdmin(ColumnToggleModelAdmin):
-    list_display = ("name", "category", "amount", "is_active", "created_at")
-    default_selected_columns = [ 'name', "catrgory", 'amount', 'is_active']
+    list_display = ("name", "category", "order", "amount", "is_active", "created_at")
+    default_selected_columns = [ 'name', "category", "order", 'amount', 'is_active']
 
 @admin.register(Category)
 class CategoryAdmin(ColumnToggleModelAdmin):
-    list_display = ("name", "text", "is_active", "created_at")
-    default_selected_columns = ['name', 'text', 'is_active', "created_at"]
+    list_display = ("name", "text", "order", "is_active", "created_at")
+    default_selected_columns = ['name', 'text', "order", 'is_active', "created_at"]
