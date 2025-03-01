@@ -71,7 +71,7 @@ class TransactionReceivingInline(nested_admin.NestedTabularInline):
 
     def get_formset(self, request, obj=None, **kwargs):
             formset = super().get_formset(request, obj, **kwargs)
-            if obj: 
+            if obj and obj.currency: 
                 formset.form.base_fields['amount'].label = f"СУММА В {obj.currency.user_currency}"
             return formset
 
@@ -84,7 +84,7 @@ class TransactionSendingInline(nested_admin.NestedTabularInline):
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
         
-        if obj: 
+        if obj and obj.currency: 
             formset.form.base_fields['amount'].label = f"СУММА В {obj.currency.exchange_currency}"
         return formset
     
@@ -168,17 +168,17 @@ class OrderResource(ModelResource):
 
     sum_of_transactions = fields.Field(column_name='sum_of_transactions')
     def dehydrate_sum_of_transactions(self, order):
-        total_amount = order.transactions.aggregate(Sum('amount'))['amount__sum']
+        total_amount = order.transactions_r.aggregate(Sum('amount'))['amount__sum']
         return total_amount if total_amount else "-"
 
     average_course = fields.Field(column_name='average_course')
     def dehydrate_average_course(self, order):
-        average_course = order.transactions.aggregate(Avg('exchange_course'))['exchange_course__avg']
+        average_course = order.transactions_r.aggregate(Avg('exchange_course'))['exchange_course__avg']
         return round(average_course, 2) if average_course else "-"
 
     sum_of_usdt = fields.Field(column_name='sum_of_usdt')
     def dehydrate_sum_of_usdt(self, order):
-        total_usdt = order.transactions.aggregate(Sum('amount_usdt'))['amount_usdt__sum']
+        total_usdt = order.transactions_r.aggregate(Sum('amount_usdt'))['amount_usdt__sum']
         return round(total_usdt, 2) if total_usdt else "-"
 
 
@@ -225,7 +225,7 @@ class OrderAdmin(nested_admin.NestedModelAdmin, ColumnToggleModelAdmin, ImportEx
     list_filter = ('status', 'type', "tariff", ('created_at', DateRangeFilter),)
     exclude = ('amount', 'amount_output', 'profit', 'admin_profit')
     readonly_fields = ('order_id_display', 'order_id', 'type', "tariff", 
-                       'promocode', 'currency', 'exchange_course', 'clean_course', 
+                       'promocode', 'currency', 'exchange_course',
                        'input_amount', 'output_amount', 'profit_display', "admin_profit_display", "order_history",
                        "sum_of_transactions", "average_course", "sum_of_usdt") 
     inlines = [TransactionReceivingInline, TransactionSendingInline]

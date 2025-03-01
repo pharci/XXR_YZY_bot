@@ -14,6 +14,11 @@ class UserAdmin(nested_admin.NestedModelAdmin, ColumnToggleModelAdmin):
     readonly_fields = ("get_profit_by_month", ) 
     inlines = [PromocodeInline]
 
+    def get_readonly_fields(self, request, obj=None):
+        if not request.user.is_superuser:
+            return [field.name for field in self.model._meta.fields if field.name != "description"] + ["user_permissions", "groups"]
+        return super().get_readonly_fields(request, obj)
+
     def telegram(self, obj):
         return format_html('<a href="https://t.me/{}">@{}</a>', obj.username, obj.username)
     telegram.short_description = "Telegram"

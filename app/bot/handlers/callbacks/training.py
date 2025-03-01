@@ -10,6 +10,7 @@ from aiogram.fsm.state import StatesGroup, State
 from admin_app.orders.models import Conversion, Promocode, OrderTypeEnum
 from admin_app.accounts.models import User
 from .utils import createOrder, checkPromocode
+from .exchange import OrderState
 
 router = Router()
 
@@ -21,9 +22,12 @@ class TrainingState(StatesGroup):
     CreateOrder = State()
 
 
-
+@router.callback_query(OrderState.receiving, F.data == "go_to_training")
 @router.callback_query(F.data == "Training")
 async def start(call: types.CallbackQuery, state: FSMContext):
+
+    await state.clear()
+
     user = await DjangoRepo.filter(User, telegram_id=call.message.chat.id)
     if not user[0].contact:
         return await call.message.edit_text(

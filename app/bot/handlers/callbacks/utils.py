@@ -58,10 +58,10 @@ async def createOrder(call, data):
     admins = await DjangoRepo.filter(User, is_staff=True, get_notifications_orders=True)
     url = reverse("admin:orders_order_change", args=[order.id])
     for admin in admins:
-        await send_telegram_message(user_id=admin.telegram_id, text=text, url=f"{settings.WEBHOOK_URL}/admin{url}")
+        await send_telegram_message(user_id=admin.telegram_id, text=text, url=f"{settings.WEBHOOK_URL}{url}")
 
     if settings.GROUP_ID:
-        await send_telegram_message(settings.GROUP_ID, text=text, url=f"{settings.WEBHOOK_URL}/admin{url}")
+        await send_telegram_message(settings.GROUP_ID, text=text, url=f"{settings.WEBHOOK_URL}{url}")
 
         
 

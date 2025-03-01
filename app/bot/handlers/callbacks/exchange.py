@@ -85,7 +85,7 @@ async def currency_input(call: types.CallbackQuery, state: FSMContext):
         f"<b>Зависимость курса от количества:</b>\n" \
         f"{await grade_text(conversion)}\n\n" \
         f"Введите сумму в {call.data}:",
-        reply_markup=autokey({'Отмена': 'start'})
+        reply_markup=autokey({'Перейти к обучению': 'go_to_training', 'Отмена': 'start'})
         )
 
     await state.set_state(OrderState.receiving)
@@ -100,7 +100,7 @@ async def receiving_amount(message: types.Message, state: FSMContext):
 
     minimum = int(min(graduations, key=graduations.get))
     minimum_second = round(minimum * conversion.course, 2)
-    amount = message.text.strip()
+    amount = message.text.strip().replace(" ", "")
 
     if re.fullmatch(r"-?\d+([.,]\d+)?", amount):
         amount = round(Decimal(amount.replace(",", ".")), 2)
@@ -131,6 +131,7 @@ async def grade_text(conversion):
     for key, value in conversion.grades.items():
         adjustment_course = round(conversion.course - Decimal(value), 2)
         grade_text.append(f"<b>От {key} {conversion.exchange_currency}  — </b> {adjustment_course}")
+    grade_text.append(f"\n<i>Если пройти обучение, вы сможете обменивать самостоятельно по курсу <b>{conversion.clean_course}</b></i>.")
     return "\n".join(grade_text)
 
 
