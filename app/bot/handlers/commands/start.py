@@ -29,7 +29,7 @@ async def start(message: types.Message, state: FSMContext):
         message_bot[0].text if message_bot else "Меню",
         disable_web_page_preview=True,
         reply_markup=autokey({'Обмен валюты': 'Exchange', 
-                              'Самовыкуп': 'Selfpay', 
+                            #   'Самовыкуп': 'Selfpay', 
                               'Обучение': 'Training', 
                               'Профиль': 'Profile', 
                               'Помощь': 'help'})
@@ -45,7 +45,7 @@ async def start(call: types.CallbackQuery, state: FSMContext):
         message_bot[0].text if message_bot else "Меню", 
         disable_web_page_preview=True,
         reply_markup=autokey({'Обмен валюты': 'Exchange', 
-                              'Самовыкуп': 'Selfpay', 
+                            #   'Самовыкуп': 'Selfpay', 
                               'Обучение': 'Training', 
                               'Профиль': 'Profile', 
                               'Помощь': 'help'})
